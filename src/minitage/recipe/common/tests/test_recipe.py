@@ -43,7 +43,7 @@ import pkg_resources
 import setuptools
 
 from minitage.core.makers.interfaces import IMakerFactory
-from minitage.recipe.common import MinitageCommonRecipe
+from minitage.recipe.common.common import MinitageCommonRecipe
 from minitage.core.common import md5sum
 from minitage.core import core
 from minitage.core.tests.test_common import write
