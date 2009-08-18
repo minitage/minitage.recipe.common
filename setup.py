@@ -6,7 +6,7 @@ setupdir = os.path.abspath(
 os.chdir(setupdir)
 
 name='minitage.recipe.common'
-version = '1.35'
+version = '1.36'
 
 def read(*rnames):
     return open(
@@ -16,9 +16,9 @@ def read(*rnames):
 long_description = (
     read('README.txt')
     + '\n'\
-    + read('src', 'minitage', 'recipe', 'tests', 'shared.txt')
+    + read('src', 'minitage', 'recipe', 'common', 'tests', 'shared.txt')
     + '\n'
-    + read('src', 'minitage', 'recipe', 'tests', 'api.txt')
+    + read('src', 'minitage', 'recipe', 'common', 'tests', 'api.txt')
     + '\n'
     + read('CHANGES.txt')
     + '\n'
