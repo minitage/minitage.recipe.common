@@ -36,7 +36,10 @@ import os
 import re
 import shutil
 import sys
-import md5 as mmd5
+try:
+    from hashlib import md5 as mmd5
+except:
+    import md5 as mmd5
 import subprocess
 import urlparse
 from distutils.dir_util import copy_tree
