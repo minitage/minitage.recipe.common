@@ -39,7 +39,7 @@ import sys
 try:
     from hashlib import mmd5
 except:
-    from md5 as new as mmd5
+    from md5 import new as mmd5
 import subprocess
 import urlparse
 from distutils.dir_util import copy_tree
