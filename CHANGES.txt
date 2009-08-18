@@ -2,6 +2,12 @@
 CHANGELOG
 =======================
 
+1.42
+------
+
+    - API compatibility for cmmi
+
+
 1.41
 -----
 

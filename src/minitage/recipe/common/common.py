@@ -170,11 +170,12 @@ class MinitageCommonRecipe(object):
             )
         )
         # update with the desired env. options
+        self.environ = {}
         if 'environment' in options:
             if not '=' in options["environment"]:
                 lenv = buildout.get(options['environment'].strip(), {})
                 for key in lenv:
-                    os.environ[key] = lenv[key]
+                    self.environ[key] = os.environ[key] = lenv[key]
             else:
                  for line in options["environment"].split("\n"):
                      try:
@@ -182,7 +183,7 @@ class MinitageCommonRecipe(object):
                          key = lparts[0]
                          value = '='.join(lparts[1:])
                          key, _, value = line.partition('=')
-                         os.environ[key] = value
+                         self.environ[key] = os.environ[key] = value
                      except Exception, e:
                          pass
 
