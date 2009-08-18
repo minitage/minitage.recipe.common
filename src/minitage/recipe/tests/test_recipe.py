@@ -44,9 +44,6 @@ import setuptools
 
 from minitage.core.makers.interfaces import IMakerFactory
 from minitage.recipe.common import MinitageCommonRecipe
-from minitage.recipe.egg  import Recipe as EGGSRecipe
-from minitage.recipe.du   import Recipe as DURecipe
-from minitage.recipe.cmmi import Recipe as CMMIRecipe
 from minitage.core.common import md5sum
 from minitage.core import core
 from minitage.core.tests.test_common import write
@@ -88,7 +85,7 @@ library-dirs = a/lib b/lib c/lib
             d/lib e/lib f/lib
 rpath = a b c
         d e f
-recipe = minitage.recipe:cmmi
+#recipe = minitage.recipe:cmmi
 url=file://%s
 hook = false
 md5sum=098f6bcd4621d373cade4e832627b4f6
@@ -331,7 +328,7 @@ class RecipeTest(unittest.TestCase):
                 ' -mmacosx-version-min=10.5.0   -lc',
             )
         b = os.environ.get('LDFLAGS')
-        self.assertEquals(a, b)
+        self.assertEquals(a.replace('   ', ' ').replace('  ', ' '), b)
 
     def testCallHook(self):
         """testCallHook."""

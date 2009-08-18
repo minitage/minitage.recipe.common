@@ -2,7 +2,13 @@
 CHANGELOG
 =======================
 
-UP
+
+1.35
+-----
+
+    - split all recipes into singles ones.
+
+.34
 ---
 
 all:
