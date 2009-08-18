@@ -37,9 +37,9 @@ import re
 import shutil
 import sys
 try:
-    from hashlib import md5 as mmd5
+    from hashlib import mmd5
 except:
-    import md5 as mmd5
+    from md5 as new as mmd5
 import subprocess
 import urlparse
 from distutils.dir_util import copy_tree
@@ -786,7 +786,7 @@ class MinitageCommonRecipe(object):
             return scm_dest
         else:
             if cache:
-                m = mmd5.new()
+                m = mmd5()
                 m.update(url)
                 url_md5sum = m.hexdigest()
                 _, _, urlpath, _, fragment = urlparse.urlsplit(url)

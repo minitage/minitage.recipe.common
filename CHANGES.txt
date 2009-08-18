@@ -2,8 +2,8 @@
 CHANGELOG
 =======================
 
-1.37
------
+-> 1.38
+---------
 
     - remove deprecationwarning
 
