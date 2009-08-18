@@ -37,8 +37,8 @@ import re
 import shutil
 import sys
 try:
-    from hashlib import mmd5
-except:
+    from hashlib import md5 as mmd5
+except Exception, e:
     from md5 import new as mmd5
 import subprocess
 import urlparse
