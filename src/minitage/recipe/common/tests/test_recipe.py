@@ -208,31 +208,6 @@ class RecipeTest(unittest.TestCase):
         recipe = MinitageCommonRecipe(bd, '666', bd['part'])
         self.assertEquals(os.environ['foo', 'bartest'])
 
-    def testdownload(self):
-        """testDownload."""
-        p = tmp
-        bd = Buildout(fp, [])
-        bd.offline = False
-        recipe = MinitageCommonRecipe(bd, '666', bd['part'])
-        ret = recipe._download()
-        self.assertTrue(
-            os.path.isfile(
-                os.path.join(recipe.download_cache, 'buildouttest')
-            )
-        )
-        p = tmp
-        bd = Buildout(fp, [])
-        bd.offline = True
-        open(os.path.join(p, 'a'), 'w').write('test')
-        recipe = MinitageCommonRecipe(bd, '666', bd['part'])
-        recipe.url = 'http://foo/a'
-        recipe.download_cache = p
-        ret = recipe._download()
-        self.assertEquals(
-            ret,
-            os.path.join(p, 'a')
-        )
-
     def testPyPath(self):
         """testPyPath."""
         p = tmp
@@ -355,42 +330,6 @@ EOF""" % (tmp, hook, tmp))
             'foo'
         )
 
-    def testGetCompilDir(self):
-        """testGetCompilDir."""
-        p = tmp
-        os.system("""
-cd %s
-mkdir .download
-mkdir tutu
-mkdir tutu/.download
-""" % (tmp))
-        bd = Buildout(fp, [])
-        bd.offline = False
-        recipe = MinitageCommonRecipe(bd, '666', bd['part'])
-        directory = recipe._get_compil_dir(tmp)
-        self.assertEquals(directory, os.path.join(tmp, 'tutu'))
-
-    def testChooseConfigure(self):
-        """testChooseConfigure."""
-        p = tmp
-        os.system("""
-cd %s
-touch configure
-mkdir toto
-touch toto/test
-""" % (tmp))
-        bd = Buildout(fp, [])
-        bd.offline = False
-        recipe = MinitageCommonRecipe(bd, '666', bd['part'])
-        configure = recipe._choose_configure(tmp)
-        self.assertEquals(configure, os.path.join(tmp, 'configure'))
-        self.assertEquals(recipe.build_dir, tmp)
-
-        recipe.build_dir = os.path.join(tmp, 'toto')
-        recipe.configure = 'test'
-        configure = recipe._choose_configure(recipe.build_dir)
-        self.assertEquals(configure, os.path.join(tmp, 'toto', 'test'))
-        self.assertEquals(recipe.build_dir, os.path.join(tmp, 'toto'))
 
 def test_suite():
     return unittest.makeSuite(RecipeTest)

@@ -186,7 +186,6 @@ class MinitageCommonRecipe(object):
                      except Exception, e:
                          pass
 
-
         # maybe md5
         self.md5 = self.options.get('md5sum', None)
 
@@ -210,16 +209,6 @@ class MinitageCommonRecipe(object):
         self.prefix = self.options.get('prefix', options['location'])
         if options.get("shared", "false").lower() == "true":
             pass
-
-        # configure script for cmmi packages
-        self.configure = options.get('configure', 'configure')
-
-        # prefix separtor in ./configure --prefix%SEPARATOR%path
-        self.prefix_separator = options.get('prefix-separator', '=')
-        if self.prefix_separator == '':
-            self.prefix_separator = ' '
-        self.prefix_option = self.options.get('prefix-option',
-                                              '--prefix%s' % self.prefix_separator)
 
         # if we are installing in minitage, try to get the
         # minibuild name and object there.
@@ -295,51 +284,6 @@ class MinitageCommonRecipe(object):
                 )
             )
 
-        # if gmake is setted. taking it as the make cmd !
-        # be careful to have a 'gmake' in your path
-        # we have to make it only in non linux env.
-        # if wehave gmake setted, use gmake too.
-        gnumake = 'make'
-        if self.buildout.get('part', {}).get('gmake', None)\
-           and self.uname not in ['cygwin', 'linux']:
-            gnumake = 'gmake'
-        self.options['make-binary'] = self.make_cmd = self.options.get('make-binary', gnumake).strip()
-        self.options['make-options'] = self.make_options = self.options.get('make-options', '').strip()
-
-        # what we will install.
-        # if 'make-targets'  present, we get it line by line
-        # and all target must be specified
-        # We will default to make '' and make install
-        self.install_in_place = self.options.get('install-in-place')
-        self.make_targets = splitstrip(
-            self.options.get( 'make-targets', ' '),
-            '\n'
-        )
-        if not self.make_targets:
-            self.make_targets = ['']
-
-        self.install_targets =  splitstrip(
-            self.options.get( 'make-install-targets', 'install'),
-            '\n'
-        )
-
-        # configuration options
-        self.autogen = self.options.get('autogen', '').strip()
-        self.configure_options = ' '.join(
-            splitstrip(
-                self.options.get( 'configure-options', '')
-            )
-        )
-        self.configure_options += ' %s ' % ' '.join(
-            splitstrip(
-                self.options.get( 'extra_options', '')
-            )
-        )
-        # conditionnaly add OS specifics patches.
-        self.configure_options += ' %s' % (
-            self.options.get('configure-options-%s' % (self.uname.lower()), '')
-        )
-
         # path we will put in env. at build time
         self.path = splitstrip(self.options.get('path', ''))
 
@@ -359,12 +303,6 @@ class MinitageCommonRecipe(object):
             buildout['buildout'].get('directory'),
             '__minitage__%s__tmp' % name
         )
-
-        # build directory
-        self.build_dir = self.options.get('build-dir', None)
-        self.inner_dir = self.options.get('inner-dir', None)
-        if self.inner_dir:
-          self.inner_dir = os.path.join(self.tmp_directory, self.inner_dir)
 
         # minitage specific
         # we will search for (priority order)
@@ -438,8 +376,6 @@ class MinitageCommonRecipe(object):
                 self.minitage_section.get('dependencies', '')
             ) + minibuild_dependencies ]
         )
-
-
 
         # sometime we install system libraries as eggs because they depend on
         # a particular python version !
@@ -589,101 +525,6 @@ class MinitageCommonRecipe(object):
                     self.tmp_directory)
             )
             shutil.rmtree(self.tmp_directory)
-
-    def go_inner_dir(self):
-      if self.inner_dir:
-        os.chdir(self.inner_dir)
-
-    def _autogen(self):
-        """Run autogen script.
-        """
-        self.go_inner_dir()
-        cwd = os.getcwd()
-        os.chdir(self.build_dir)
-        if 'autogen' in self.options:
-            self.logger.info('Auto generating configure files')
-            autogen = os.path.join(self.build_dir, self.autogen)
-            self._system(autogen)
-        os.chdir(cwd)
-
-    def _choose_configure(self, compile_dir):
-        """configure magic to runne with
-        exotic configure systems.
-        """
-        self.go_inner_dir()
-        if self.build_dir:
-            if not os.path.isdir(self.build_dir):
-                os.makedirs(self.build_dir)
-        else:
-            self.build_dir = compile_dir
-
-        configure = os.path.join(compile_dir, self.configure)
-        if not os.path.isfile(configure) \
-           and (not 'noconfigure' in self.options):
-            self.logger.error('Unable to find the configure script')
-            raise core.MinimergeError(
-                'Invalid package contents, '
-                'there is no configure script in %s.' % compile_dir
-            )
-        return configure
-
-    def _configure(self, configure):
-        """Run configure script.
-        Argument
-            - configure : the configure script
-        """
-        self.go_inner_dir()
-        cwd = os.getcwd()
-        os.chdir(self.build_dir)
-        if not 'noconfigure' in self.options:
-            self._system(
-                    '%s %s%s %s' % (
-                        configure,
-                        self.prefix_option,
-                        self.prefix,
-                        self.configure_options
-                    )
-                )
-        os.chdir(cwd)
-
-    def _make(self, directory, targets):
-        """Run make targets except install."""
-        self.go_inner_dir()
-        cwd = os.getcwd()
-        os.chdir(directory)
-        if not 'nomake' in self.options:
-            for target in targets:
-                try:
-                    self._system('%s %s %s' % (self.make_cmd, self.make_options, target))
-                except Exception, e:
-                    message = 'Make failed for targets: %s' % targets
-                    raise core.MinimergeError(message)
-        os.chdir(cwd)
-
-    def _make_install(self, directory):
-        """"""
-        # moving and restoring if problem :)
-        self.go_inner_dir()
-        cwd = os.getcwd()
-        os.chdir(directory)
-        tmp = '%s.old' % self.prefix
-        if not 'noinstall' in self.options:
-            if os.path.isdir(self.prefix):
-                copy_tree(self.prefix, tmp)
-            if not self.install_in_place:
-                shutil.rmtree(self.prefix)
-            try:
-                if not os.path.exists(self.prefix):
-                    os.makedirs(self.prefix)
-                self._call_hook('pending-make-install-hook')
-                self._make(directory, self.install_targets)
-            except Exception, e:
-                shutil.rmtree(self.prefix)
-                shutil.move(tmp, self.prefix)
-                raise core.MinimergeError('Install failed:\n\t%s' % e)
-        if os.path.exists(tmp):
-            shutil.rmtree(tmp)
-        os.chdir(cwd)
 
     def _download(self,
                   url=None,
@@ -1014,33 +855,6 @@ class MinitageCommonRecipe(object):
             os.chdir(cwd)
         return hooked
 
-    def _get_compil_dir(self, directory, filter=True):
-        """Get the compilation directory after creation.
-        Basically, the first repository in the directory
-        which is not the download cache if there are no
-        files in the directory
-        Arguments:
-            - directory where we will compile.
-        """
-        self.logger.info('Guessing compilation directory')
-        self.go_inner_dir()
-        contents = os.listdir(directory)
-        # remove download dir
-        if '.download' in contents:
-            del contents[contents. index('.download')]
-        top = directory
-        if filter:
-            f = [i
-                 for i in os.listdir(directory)
-                 if (not os.path.isdir(os.path.join(directory, i)))
-                 and (not i.startswith('.'))]
-            d = [i
-                 for i in os.listdir(directory)
-                 if os.path.isdir(os.path.join(directory, i))
-                 and (not i.startswith('.'))]
-            if len(f) < 2 and d:
-                top = os.path.join(directory, d[0])
-        return top
 
     def _system(self, cmd):
         """Running a command."""
