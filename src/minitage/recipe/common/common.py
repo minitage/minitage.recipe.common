@@ -124,6 +124,9 @@ class MinitageCommonRecipe(object):
         self.offline = buildout.offline
         self.install_from_cache = self.options.get('install-from-cache', None)
 
+        # build directory
+        self.build_dir = self.options.get('build-dir', None)
+
         # url from and scm type if any
         # the scm is one available in the 'fetchers' factory
         self.url = self.options.get('url', None)
@@ -531,7 +534,7 @@ class MinitageCommonRecipe(object):
 
         self.inner_dir = self.options.get('inner-dir', None)
         if self.inner_dir:
-            self.inner_dir = os.path.join(self.tmp_directory, self.inner_dir) 
+            self.inner_dir = os.path.join(self.tmp_directory, self.inner_dir)
 
     def _download(self,
                   url=None,
@@ -825,12 +828,13 @@ class MinitageCommonRecipe(object):
                                         cache=True,
                                         use_cache = False,
                                        )
-                system('%s -t %s < %s' %
-                       (patch_cmd,
+                ret = system(
+                    '%s -t %s < %s' % (
+                        patch_cmd,
                         patch_options,
                         fpatch),
-                       self.logger
-                      )
+                    self.logger
+                )
                 os.chdir(cwd)
 
     def update(self):
