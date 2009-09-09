@@ -835,7 +835,7 @@ class MinitageCommonRecipe(object):
                         fpatch),
                     self.logger
                 )
-                os.chdir(cwd)
+            os.chdir(cwd)
 
     def update(self):
         pass
