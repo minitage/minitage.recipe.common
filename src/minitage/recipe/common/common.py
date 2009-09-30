@@ -554,7 +554,7 @@ class MinitageCommonRecipe(object):
         md5: file md5sum
         use_cache : if False, always redownload even if the file is there
         """
-        self.logger.info('Download archive')
+        self.logger.debug('Download archive from %s.'%url)
         if not url:
             url = self.url
 
@@ -622,7 +622,10 @@ class MinitageCommonRecipe(object):
             if not self.offline:
                 ff = IFetcherFactory(self.minitage_config)
                 scm = ff(scm)
-                scm.fetch_or_update(scm_dest, url, opts)
+                verbose = False
+                if self.logger.getEffectiveLevel() <= logging.DEBUG:
+                    verbose = True
+                scm.fetch_or_update(scm_dest, url, opts, verbose=verbose)
             else:
                 if not os.path.exists(scm_dest):
                     message = 'Can\'t get a working copy from \'%s\''\
@@ -645,10 +648,13 @@ class MinitageCommonRecipe(object):
                 destination = os.path.join(destination, "%s_%s" % (filename, url_md5sum))
             if destination and not os.path.isdir(destination):
                 os.makedirs(destination)
+            logger = None
+            if self.logger.getEffectiveLevel() <= logging.DEBUG:
+                logger = self.logger
             return get_from_cache(
                 url = url,
                 download_cache = destination,
-                logger = self.logger,
+                logger = logger,
                 file_md5 = md5,
                 offline = self.offline,
                 use_cache=use_cache
@@ -659,7 +665,7 @@ class MinitageCommonRecipe(object):
         Arguments:
             - ws : setuptools WorkingSet
         """
-        self.logger.info('Setting path')
+        self.logger.debug('Setting path')
         # setuptool ws maybe?
         if ws:
             self.pypath.extend(ws.entries)
@@ -687,7 +693,7 @@ class MinitageCommonRecipe(object):
 
     def _set_path(self):
         """Set path."""
-        self.logger.info('Setting path')
+        self.logger.debug('Setting path')
         os.environ['PATH'] = appendVar(os.environ['PATH'],
                      uniquify(self.path)\
                      + [self.buildout['buildout']['directory'],
@@ -697,7 +703,7 @@ class MinitageCommonRecipe(object):
 
     def _set_pkgconfigpath(self):
         """Set PKG-CONFIG-PATH."""
-        self.logger.info('Setting pkgconfigpath')
+        self.logger.debug('Setting pkgconfigpath')
         pkgp = os.environ.get('PKG_CONFIG_PATH', '').split(':')
         os.environ['PKG_CONFIG_PATH'] = ':'.join(
             uniquify(self.pkgconfigpath+pkgp)
@@ -705,7 +711,7 @@ class MinitageCommonRecipe(object):
 
     def _set_compilation_flags(self):
         """Set CFALGS/LDFLAGS."""
-        self.logger.info('Setting compilation flags')
+        self.logger.debug('Setting compilation flags')
         if self._skip_flags:
             self.logger.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             self.logger.warning('!!! Build variable settings has been disabled !!!')
@@ -797,7 +803,7 @@ class MinitageCommonRecipe(object):
         """Unpack something"""
         if not directory:
             directory = self.tmp_directory
-        self.logger.info('Unpacking in %s.' % directory)
+        self.logger.debug('Unpacking in %s.' % directory)
         if os.path.isdir(fname):
             if not os.path.exists(directory):
                 os.makedirs(directory)
@@ -890,7 +896,7 @@ class MinitageCommonRecipe(object):
         Arguments:
             - directory where we will compile.
         """
-        self.logger.info('Guessing compilation directory')
+        self.logger.debug('Guessing compilation directory')
         self.go_inner_dir()
         contents = os.listdir(directory)
         # remove download dir

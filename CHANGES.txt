@@ -2,11 +2,12 @@
 CHANGELOG
 =======================
 
-->1.45
+->UP
 --------
 
     - API fix
     - indentation fix
+    - make things shut up
 
 1.42
 ------
