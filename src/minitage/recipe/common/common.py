@@ -290,7 +290,6 @@ class MinitageCommonRecipe(object):
         if 'darwin' in self.uname.lower():
             kv = os.uname()[2]
             osxflavor = None
-            print kv
             if kv == '9.8.0':
                 osxflavor = 'leopard'
             if kv == '10.0.0':
