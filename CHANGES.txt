@@ -8,6 +8,10 @@ CHANGELOG
     - API fix
     - indentation fix
     - make things shut up
+    - add patch flavors for darwin, now you have:
+
+        * darwin : all macs
+        * leopard, snowleopard for a specific one
 
 1.42
 ------

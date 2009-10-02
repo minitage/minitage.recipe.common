@@ -62,6 +62,8 @@ Options
         patches to apply [see cmmi recipe for documentation]
     - patch
         A patch to apply, compatibility with zc.recipe.cmmi
+    - uname-patches
+        - patch to apply to a system or a favor of this system (linux, darwin, freebsd, freebsd(6,7,8), snowleopard, leopard)
     - location
         where to put the build result. (default to parts/PART_NAME)
     - includes:

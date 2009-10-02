@@ -287,6 +287,23 @@ class MinitageCommonRecipe(object):
                     )
                 )
             )
+        if 'darwin' in self.uname.lower():
+            kv = os.uname()[2]
+            osxflavor = None
+            print kv
+            if kv == '9.8.0':
+                osxflavor = 'leopard'
+            if kv == '10.0.0':
+                osxflavor = 'snowleopard'
+            if osxflavor:
+                self.patches.extend(
+                    splitstrip(
+                        self.options.get(
+                            '%s-patches' % osxflavor,
+                            ''
+                        )
+                    )
+                )
 
         # path we will put in env. at build time
         self.path = splitstrip(self.options.get('path', ''))
@@ -483,7 +500,6 @@ class MinitageCommonRecipe(object):
                     raise core.MinimergeError('Your python executable seems to point to a directory!!!')
             except:
                 raise
-
         if not os.path.isdir(self.executable_prefix):
             message = 'Python seems not to find its prefix : %s' % self.executable_prefix
             self.logger.warning(message)
