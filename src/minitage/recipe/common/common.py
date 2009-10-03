@@ -287,18 +287,20 @@ class MinitageCommonRecipe(object):
                     )
                 )
             )
+        self.osxflavor = ''
+        self.osx_target = self.options.get('osx-target', None)
+        self.force_osx_target = self.options.get('force-osx-target', None)
         if 'darwin' in self.uname.lower():
             kv = os.uname()[2]
-            osxflavor = None
             if kv == '9.8.0':
-                osxflavor = 'leopard'
+                self.osxflavor = 'leopard'
             if kv == '10.0.0':
-                osxflavor = 'snowleopard'
-            if osxflavor:
+                self.osxflavor = 'snowleopard'
+            if self.osxflavor:
                 self.patches.extend(
                     splitstrip(
                         self.options.get(
-                            '%s-patches' % osxflavor,
+                            '%s-patches' % self.osxflavor,
                             ''
                         )
                     )
@@ -751,7 +753,20 @@ class MinitageCommonRecipe(object):
                 # need to cut backward comatibility in the linker
                 # to get the new rpath feature present
                 # >= osx Leopard
-                darwin_ldflags = ' -mmacosx-version-min=10.5.0 '
+                if not (self.osx_target == 'false'):
+                    if self.osxflavor == 'leopard':
+                        self.osx_target = '10.5'
+                    if self.osxflavor == 'snowleopard':
+                        self.osx_target = '10.6'
+                    if self.force_osx_target:
+                        mdt = self.force_osx_target
+                        if self.force_osx_target.strip() == 'true':
+                            if self.osxflavor == 'snowleopard':
+                                mdt = '10.5'
+                            if self.osxflavor == 'leopard':
+                                mdt = '10.4'
+                        os.environ['MACOSX_DEPLOYMENT_TARGET'] = mdt
+                darwin_ldflags += ' -mmacosx-version-min=%s'  % self.osx_target
 
             os.environ['LDFLAGS'] = appendVar(
                 os.environ.get('LDFLAGS',''),

@@ -88,6 +88,15 @@ Options
     - pythonpath
         line separated list of paths to append to $PYTHONPATH during build
 
+    - osx-target: -mmacosx-version-min setting, wanting users will know what that means ;)
+
+        minitage put -mmacosx-version-min in the env. if you dont set this to 'false'
+        default value on leopard is 10.5.0 and on snowleopard 10.6.0
+
+    - force-osx-target
+
+        force MACOSX_DEPLOYMENT_TARGET to value or default if 'true' (snowleopard (10.5) /leopard(10.6))
+
 Options incidences
 ----------------------
 
