@@ -754,17 +754,17 @@ class MinitageCommonRecipe(object):
                 # to get the new rpath feature present
                 # >= osx Leopard
                 if not (self.osx_target == 'false'):
-                    if self.osxflavor == 'leopard':
-                        self.osx_target = '10.5'
                     if self.osxflavor == 'snowleopard':
                         self.osx_target = '10.6'
+                    if self.osxflavor == 'leopard':
+                        self.osx_target = '10.5'
                     if self.force_osx_target:
                         mdt = self.force_osx_target
                         if self.force_osx_target.strip() == 'true':
                             if self.osxflavor == 'snowleopard':
-                                mdt = '10.5'
+                                mdt = '10.6'
                             if self.osxflavor == 'leopard':
-                                mdt = '10.4'
+                                mdt = '10.5'
                         os.environ['MACOSX_DEPLOYMENT_TARGET'] = mdt
                 darwin_ldflags += ' -mmacosx-version-min=%s'  % self.osx_target
 
