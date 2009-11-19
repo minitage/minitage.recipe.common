@@ -491,7 +491,8 @@ class MinitageCommonRecipe(object):
                     subprocess.Popen(
                         [self.executable, '-c', 'import sys;print sys.prefix'],
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                        close_fds=True).stdout.read().replace('\n', '')
+                        #close_fds=True
+                    ).stdout.read().replace('\n', '')
                 )
         except:
             # getting the path from the link, if we can:
