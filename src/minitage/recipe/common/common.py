@@ -651,8 +651,12 @@ class MinitageCommonRecipe(object):
 
             # fetching now
             if not self.offline:
+                import pdb;pdb.set_trace()  ## Breakpoint ##
                 ff = IFetcherFactory(self.minitage_config)
                 scm = ff(scm)
+                if scm.name == 'Mercurial':
+                    if not os.path.exists(scm_dest):
+                        os.makedirs(scm_dest)
                 verbose = False
                 if self.logger.getEffectiveLevel() <= logging.DEBUG:
                     verbose = True
