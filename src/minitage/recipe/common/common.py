@@ -112,6 +112,8 @@ def which(program, environ=None, key = 'PATH', split = ':'):
         fp = os.path.abspath(os.path.join(entry, program))
         if os.path.exists(fp):
             return fp
+        if sys.platform.startswith('win') and os.path.exists(fp+'.exe'):
+            return fp+'.exe'
     raise IOError('Program not fond: %s in %s ' % (program, PATH))
 
 
@@ -125,10 +127,15 @@ class MinitageCommonRecipe(object):
         because i want to use this object as an api for the other
         recipes.
         """
+
         self.logger = logging.getLogger(__logger__)
         self.buildout, self.name, self.options = buildout, name, options
         self.offline = buildout.offline
         self.install_from_cache = self.options.get('install-from-cache', None)
+
+        self.paths_sep = ':'
+        if sys.platform.startswith('win'):
+            self.paths_sep = ';'
 
         # build directory
         self.build_dir = self.options.get('build-dir', None)
@@ -471,7 +478,7 @@ class MinitageCommonRecipe(object):
         if not self.executable.startswith('/'):
             self._set_path()
             try:
-                self.executable = which(self.executable)
+                self.executable = which(self.executable, split = self.paths_sep)
             except IOError, e:
                 raise core.MinimergeError('Python executable '
                                  'was not found !!!\n\n%s' % e)
@@ -712,7 +719,7 @@ class MinitageCommonRecipe(object):
                 pypath.append(entry)
         # uniquify the list
         pypath = uniquify(pypath)
-        os.environ['PYTHONPATH'] = ':'.join(pypath)
+        os.environ['PYTHONPATH'] = self.paths_sep.join(pypath)
 
 
     def _set_path(self):
@@ -722,14 +729,14 @@ class MinitageCommonRecipe(object):
                      uniquify(self.path)\
                      + [self.buildout['buildout']['directory'],
                         self.options['location']]\
-                     , ':')
+                     , self.paths_sep)
 
 
     def _set_pkgconfigpath(self):
         """Set PKG-CONFIG-PATH."""
         self.logger.debug('Setting pkgconfigpath')
-        pkgp = os.environ.get('PKG_CONFIG_PATH', '').split(':')
-        os.environ['PKG_CONFIG_PATH'] = ':'.join(
+        pkgp = os.environ.get('PKG_CONFIG_PATH', '').split(self.paths_sep)
+        os.environ['PKG_CONFIG_PATH'] = self.paths_sep.join(
             uniquify(self.pkgconfigpath+pkgp)
         )
 
@@ -751,7 +758,7 @@ class MinitageCommonRecipe(object):
                 [s for s in self.rpath\
                  if s.strip()]
                 + [os.path.join(self.prefix, 'lib')],
-                ':'
+                self.paths_sep
             )
 
         if self.libraries:
