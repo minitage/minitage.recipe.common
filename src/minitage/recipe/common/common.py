@@ -43,6 +43,12 @@ except Exception, e:
 import subprocess
 import urlparse
 from distutils.dir_util import copy_tree
+try:
+    from os import uname
+except:
+    from platform import uname
+
+
 
 from minitage.core.common import get_from_cache, system, splitstrip
 from minitage.core.unpackers.interfaces import IUnpackerFactory
@@ -291,7 +297,7 @@ class MinitageCommonRecipe(object):
         self.osx_target = self.options.get('osx-target', None)
         self.force_osx_target = self.options.get('force-osx-target', None)
         if 'darwin' in self.uname.lower():
-            kv = os.uname()[2]
+            kv = uname()[2]
             if kv == '9.8.0':
                 self.osxflavor = 'leopard'
             if kv == '10.0.0':

@@ -5,6 +5,7 @@ CHANGELOG
 ->UP
 --------
 
+    - win32 fix
     - API fix
     - indentation fix
     - make things shut up
