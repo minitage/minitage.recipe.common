@@ -50,7 +50,7 @@ except:
 
 
 
-from minitage.core.common import get_from_cache, system, splitstrip
+from minitage.core.common import get_from_cache, system, splitstrip, letter_re
 from minitage.core.unpackers.interfaces import IUnpackerFactory
 from minitage.core.fetchers.interfaces import IFetcherFactory
 from minitage.core import core
@@ -58,6 +58,15 @@ from minitage.core import core
 __logger__ = 'minitage.recipe'
 
 RESPACER = re.compile('\s\s*', re.I|re.M|re.U|re.S).sub
+
+def norm_path(path):
+    if path:
+        if sys.platform.startswith('win'):
+            if not ':' in path and path.startswith('\\'):
+                path = os.path.join(os.getcwd()[:2], path)
+            if letter_re.match(path):
+                path = os.path.normpath(path)
+    return path
 
 def uniquify(l):
     result = []
@@ -138,7 +147,7 @@ class MinitageCommonRecipe(object):
             self.paths_sep = ';'
 
         # build directory
-        self.build_dir = self.options.get('build-dir', None)
+        self.build_dir = norm_path(self.options.get('build-dir', None))
 
         # url from and scm type if any
         # the scm is one available in the 'fetchers' factory
@@ -170,18 +179,20 @@ class MinitageCommonRecipe(object):
                     'type': scmtype,
                     'args': scmargs,
                     'revision': scmrevison,
-                    'directory': scmdirectory,
+                    'directory': norm_path(scmdirectory),
                 }
 
         # If 'download-cache' has not been specified,
         # fallback to [buildout]['downloads']
         buildout['buildout'].setdefault(
             'download-cache',
-            buildout['buildout'].get(
-                'download-cache',
-                os.path.join(
-                    buildout['buildout']['directory'],
-                    'downloads'
+            norm_path(
+                buildout['buildout'].get(
+                    'download-cache',
+                    os.path.join(
+                        buildout['buildout']['directory'],
+                        'downloads'
+                    )
                 )
             )
         )
@@ -212,17 +223,23 @@ class MinitageCommonRecipe(object):
             # linuxXXX ?
             self.uname = 'linux'
         self.cwd = os.getcwd()
-        self.minitage_directory = os.path.abspath(
-            os.path.join(self.buildout['buildout']['directory'], '..', '..')
+        self.minitage_directory = norm_path(
+            os.path.abspath(
+                os.path.join(self.buildout['buildout']['directory'], '..', '..')
+            )
         )
 
         # destination
-        options['location'] = os.path.abspath(options.get('location',
-                                          os.path.join(
-                                              buildout['buildout']['parts-directory'],
-                                              options.get('name', self.name)
-                                          )
-                                         ))
+        options['location'] = norm_path(
+            os.path.abspath(
+                options.get('location',
+                    os.path.join(
+                        buildout['buildout']['parts-directory'],
+                        options.get('name', self.name)
+                    )
+                )
+            )
+        )
         self.prefix = self.options.get('prefix', options['location'])
         if options.get("shared", "false").lower() == "true":
             pass
@@ -249,17 +266,20 @@ class MinitageCommonRecipe(object):
             ' ',
             self.options.get( 'ldflags', '').replace('\n', '')
         ).strip()
-        self.includes += splitstrip(self.options.get('includes-dirs', ''))
-        self.libraries = splitstrip(self.options.get('library-dirs', ''))
+        self.includes += [norm_path(a)
+                          for a in splitstrip(self.options.get('includes-dirs', ''))]
+        self.libraries = [norm_path(a)
+                          for a in splitstrip(self.options.get('library-dirs', ''))]
         self.libraries_names = ' '
         for l in self.options.get('libraries', '').split():
-            self.libraries_names += '-l%s ' % l
-        self.rpath = splitstrip(self.options.get('rpath', ''))
+            self.libraries_names += '-l%s ' % norm_path(l)
+        self.rpath = [norm_path(a)
+                      for a in splitstrip(self.options.get('rpath', ''))]
 
         # separate archives in downloaddir/minitage
         self.download_cache = os.path.join(
             buildout['buildout']['directory'],
-            buildout['buildout'].get('download-cache'),
+            norm_path(buildout['buildout'].get('download-cache')),
             'minitage'
         )
 
@@ -267,38 +287,41 @@ class MinitageCommonRecipe(object):
         self.build_ext = self.options.get('build-ext', '')
 
         # patches stuff
-        self.patch_cmd = self.options.get(
-            'patch-binary',
-            'patch'
-        ).strip()
+        self.patch_cmd = norm_path(
+            self.options.get(
+                'patch-binary',
+                'patch'
+            ).strip()
+        )
 
         self.patch_options = ' '.join(
             self.options.get(
                 'patch-options', '-Np0'
             ).split()
         )
-        self.patches = self.options.get('patches', '').split()
+        self.patches = [norm_path(a)
+                        for a in self.options.get('patches', '').split()]
         if 'patch' in self.options:
             self.patches.append(
-                self.options.get('patch').strip()
+                norm_path(self.options.get('patch').strip())
             )
         # conditionnaly add OS specifics patches.
         self.patches.extend(
-            splitstrip(
+            [norm_path(a) for a in splitstrip(
                 self.options.get(
                     '%s-patches' % (self.uname.lower()),
                     ''
                 )
-            )
+            )]
         )
         if 'freebsd' in self.uname.lower():
             self.patches.extend(
-                splitstrip(
+                [norm_path(a) for a in splitstrip(
                     self.options.get(
                         'freebsd-patches',
                         ''
                     )
-                )
+                )]
             )
         self.osxflavor = ''
         self.osx_target = self.options.get('osx-target', None)
@@ -311,12 +334,12 @@ class MinitageCommonRecipe(object):
                 self.osxflavor = 'snowleopard'
             if self.osxflavor:
                 self.patches.extend(
-                    splitstrip(
+                    [norm_path(a) for a in splitstrip(
                         self.options.get(
                             '%s-patches' % self.osxflavor,
                             ''
                         )
-                    )
+                    )]
                 )
 
         # path we will put in env. at build time
@@ -330,7 +353,7 @@ class MinitageCommonRecipe(object):
                        self.options['location']]
         self.pypath.extend(self.pypath)
         self.pypath.extend(
-            splitstrip(self.options.get('pythonpath', ''))
+            [norm_path(a) for a in splitstrip(self.options.get('pythonpath', ''))]
         )
 
         # tmp dir
@@ -434,17 +457,17 @@ class MinitageCommonRecipe(object):
         if 'executable' in options:
             for lsep in '.', '..':
                 if lsep in options['executable']:
-                    self.executable = os.path.abspath(options.get('executable').strip())
+                    self.executable = norm_path(os.path.abspath(options.get('executable').strip()))
                 else:
-                    self.executable = options.get('executable').strip()
+                    self.executable = norm_path(options.get('executable').strip())
         elif 'python' in options:
-            self.executable = self.buildout.get(
+            self.executable = norm_path(self.buildout.get(
                 options['python'].strip(),
-                {}).get('executable', None)
+                {}).get('executable', None))
         elif 'python' in self.buildout:
-            self.executable = self.buildout.get(
+            self.executable = norm_path(self.buildout.get(
                 self.buildout['buildout']['python'].strip(),
-                {}).get('executable', None)
+                {}).get('executable', None))
         if not self.executable:
             # if we are an python package
             # just get the right interpreter for us.
@@ -586,6 +609,7 @@ class MinitageCommonRecipe(object):
         use_cache : if False, always redownload even if the file is there
         """
         self.logger.debug('Download archive from %s.'%url)
+
         if not url:
             url = self.url
 
@@ -650,8 +674,8 @@ class MinitageCommonRecipe(object):
                 scm_dest = os.path.join(scm_dir, subdir)
 
             # fetching now
+            scm_dest = norm_path(scm_dest)
             if not self.offline:
-                import pdb;pdb.set_trace()  ## Breakpoint ##
                 ff = IFetcherFactory(self.minitage_config)
                 scm = ff(scm)
                 if scm.name == 'Mercurial':
@@ -756,6 +780,7 @@ class MinitageCommonRecipe(object):
                                           '  %s' % self.cflags]).strip()
         os.environ['LDFLAGS']  = ' '.join([os.environ.get('LDFLAGS', '')
                                            , '  %s' % self.ldflags]).strip()
+
         if self.rpath:
             os.environ['LD_RUN_PATH'] = appendVar(
                 os.environ.get('LD_RUN_PATH', ''),
@@ -846,6 +871,26 @@ class MinitageCommonRecipe(object):
             )
         for key in ('CFLAGS', 'CPPFLAGS', 'CXXFLAGS', 'LDFLAGS', 'LD_RUN_PATH'):
             os.environ[key] = RESPACER(' ', os.environ.get(key, '')).strip()
+        # honour msvc
+        #if self.cflags:
+        
+        if sys.platform.startswith('win'):
+            os.environ['INCLUDE'] = appendVar(
+                os.environ.get('INCLUDE', ''),
+                ['%s' % s \
+                 for s in self.includes\
+                 if s.strip()]
+                ,';'
+            )
+            os.environ['LIB'] = appendVar(
+                os.environ.get('LIB', ''),
+                ['%s' % s \
+                 for s in self.libraries\
+                 if s.strip()]
+                ,';'
+            )
+            for key in ('INCLUDE', 'LIB'):
+                os.environ[key] = RESPACER(' ', os.environ.get(key, '')).strip()
 
     def _unpack(self, fname, directory=None):
         """Unpack something"""
@@ -859,7 +904,7 @@ class MinitageCommonRecipe(object):
         else:
             unpack_f = IUnpackerFactory()
             u = unpack_f(fname)
-            u.unpack(fname, directory)
+            u.unpack(fname, norm_path(directory))
 
     def _patch(self, directory, patch_cmd=None,
                patch_options=None, patches =None, download_dir=None):
@@ -875,9 +920,10 @@ class MinitageCommonRecipe(object):
             cwd = os.getcwd()
             os.chdir(directory)
             for patch in patches:
+                patch = norm_path(patch)
                 # check the md5 of the patch to see if it is the same.
                 fpatch = self._download(patch,
-                                        destination=download_dir,
+                                        destination=norm_path(download_dir),
                                         md5=None,
                                         cache=True,
                                         use_cache = False,
@@ -910,7 +956,7 @@ class MinitageCommonRecipe(object):
             self.logger.info('Executing %s' % hook)
             script = self.options[hook]
             filename, callable = script.split(':')
-            filename = os.path.abspath(filename)
+            filename = norm_path(os.path.abspath(filename))
             module = imp.load_source('script', filename)
             getattr(module, callable.strip())(
                 self.options, self.buildout
@@ -967,5 +1013,6 @@ class MinitageCommonRecipe(object):
     def go_inner_dir(self):
         if self.inner_dir:
             os.chdir(self.inner_dir)
+
 
 # vim:set et sts=4 ts=4 tw=80:

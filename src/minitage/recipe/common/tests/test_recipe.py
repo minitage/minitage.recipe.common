@@ -300,7 +300,7 @@ class RecipeTest(unittest.TestCase):
                 ''.join(['-L%s/lib -Wl,-rpath -Wl,%s/lib ' % (s,s) \
                          for s in ['a','b','c','d','e','f'] \
                          + recipe.minitage_dependencies + [recipe.prefix]]),
-                ' -mmacosx-version-min=10.5.0   -lc',
+                ' -mmacosx-version-min=None   -lc',
             )
         b = os.environ.get('LDFLAGS')
         self.assertEquals(a.replace('   ', ' ').replace('  ', ' '), b)
