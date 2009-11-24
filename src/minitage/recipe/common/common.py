@@ -36,6 +36,8 @@ import os
 import re
 import shutil
 import sys
+import tempfile
+import time
 try:
     from hashlib import md5 as mmd5
 except Exception, e:
@@ -50,7 +52,7 @@ except:
 
 
 
-from minitage.core.common import get_from_cache, system, splitstrip, letter_re
+from minitage.core.common import get_from_cache, system, splitstrip, letter_re, remove_path
 from minitage.core.unpackers.interfaces import IUnpackerFactory
 from minitage.core.fetchers.interfaces import IFetcherFactory
 from minitage.core import core
@@ -121,7 +123,7 @@ def which(program, environ=None, key = 'PATH', split = ':'):
         fp = os.path.abspath(os.path.join(entry, program))
         if os.path.exists(fp):
             return fp
-        if sys.platform.startswith('win') and os.path.exists(fp+'.exe'):
+        if (sys.platform.startwith('cyg') or sys.platform.startswith('win')) and os.path.exists(fp+'.exe'):
             return fp+'.exe'
     raise IOError('Program not fond: %s in %s ' % (program, PATH))
 
@@ -146,12 +148,25 @@ class MinitageCommonRecipe(object):
         if sys.platform.startswith('win'):
             self.paths_sep = ';'
 
-        # build directory
-        self.build_dir = norm_path(self.options.get('build-dir', None))
+        # system variables
+        self.uname = sys.platform.lower()
+        if 'freebsd' in self.uname:
+            self.uname = 'freebsd'
+        if 'linux' in self.uname:
+            self.uname = 'linux'
+        if self.uname.startswith('win') and self.uname != 'cygwin':
+            self.uname = 'win'
 
+        # build directory
+        self.build_dir = norm_path(
+            self.options.get('build-dir-%s'%self.uname,
+            self.options.get('build-dir', None))
+        )
         # url from and scm type if any
         # the scm is one available in the 'fetchers' factory
-        self.url = self.options.get('url', None)
+
+        self.url = self.options.get('url-%s'%self.uname,
+                                     self.options.get('url', None))
         self.urls_list = self.options.get('urls', '').strip().split('\n')
         self.urls_list.insert(0,self.url)
         # remove trailing /
@@ -215,13 +230,9 @@ class MinitageCommonRecipe(object):
                          pass
 
         # maybe md5
-        self.md5 = self.options.get('md5sum', None)
+        self.md5 = self.options.get('md5sum-%s' % self.uname, self.options.get('md5sum', None))
 
         # system variables
-        self.uname = sys.platform
-        if 'linux' in self.uname:
-            # linuxXXX ?
-            self.uname = 'linux'
         self.cwd = os.getcwd()
         self.minitage_directory = norm_path(
             os.path.abspath(
@@ -241,6 +252,14 @@ class MinitageCommonRecipe(object):
             )
         )
         self.prefix = self.options.get('prefix', options['location'])
+        if self.uname == 'win':
+            if letter_re.match(self.prefix):
+                dg = letter_re.match(self.prefix).groupdict()
+                letter = dg['letter']
+                path = dg['path']
+                self.prefix = '/%s/%s' % (letter, path.replace('\\', '/'))
+                self.prefix = self.prefix.replace('//', '/')
+
         if options.get("shared", "false").lower() == "true":
             pass
 
@@ -266,13 +285,13 @@ class MinitageCommonRecipe(object):
             ' ',
             self.options.get( 'ldflags', '').replace('\n', '')
         ).strip()
-        self.includes += [norm_path(a)
+        self.includes += [a
                           for a in splitstrip(self.options.get('includes-dirs', ''))]
-        self.libraries = [norm_path(a)
+        self.libraries = [a
                           for a in splitstrip(self.options.get('library-dirs', ''))]
         self.libraries_names = ' '
-        for l in self.options.get('libraries', '').split():
-            self.libraries_names += '-l%s ' % norm_path(l)
+        for l in self.options.get('libraries-%s'%self.uname,self.options.get('libraries', '')).split():
+            self.libraries_names += '-l%s ' % l
         self.rpath = [norm_path(a)
                       for a in splitstrip(self.options.get('rpath', ''))]
 
@@ -343,7 +362,7 @@ class MinitageCommonRecipe(object):
                 )
 
         # path we will put in env. at build time
-        self.path = splitstrip(self.options.get('path', ''))
+        self.path = splitstrip(self.options.get('path-%s' % self.uname, self.options.get('path', '')))
 
         # pkgconfigpath
         self.pkgconfigpath = splitstrip(self.options.get('pkgconfigpath', ''))
@@ -441,12 +460,22 @@ class MinitageCommonRecipe(object):
         # enviroenmment by dealing with them along with classical
         # system dependencies.
         for s in self.minitage_dependencies + self.minitage_eggs:
-            self.includes.append(os.path.join(s, 'include'))
-            self.libraries.append(os.path.join(s, 'lib'))
-            self.rpath.append(os.path.join(s, 'lib'))
-            self.pkgconfigpath.append(os.path.join(s, 'lib', 'pkgconfig'))
-            self.path.append(os.path.join(s, 'bin'))
-            self.path.append(os.path.join(s, 'sbin'))
+            if 'win' in self.uname:
+                m = letter_re.match(s)
+                if m:
+                    dg = m.groupdict()
+                    s = '/%s%s' % (dg['letter'], dg['path'])
+                s = s.replace('\\', '/')
+                self.libraries.append('/'.join((s, 'bin',)))
+                self.libraries.append('/'.join((s, 'sbin',)))
+                self.rpath.append('/'.join((s, 'bin',)))
+                self.rpath.append('/'.join((s, 'sbin',)))
+            self.includes.append('/'.join((s, 'include',)))
+            self.libraries.append('/'.join((s, 'lib',)))
+            self.rpath.append('/'.join((s, 'lib',)))
+            self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
+            self.path.append('/'.join((s, 'bin',)))
+            self.path.append('/'.join((s, 'sbin',)))
 
         # Defining the python interpreter used to install python stuff.
         # using the one defined in the key 'executable'
@@ -583,7 +612,14 @@ class MinitageCommonRecipe(object):
                     self.tmp_directory)
             )
             shutil.rmtree(self.tmp_directory)
-
+        if self.build_dir:
+            if os.path.isdir(self.build_dir):
+                self.logger.info(
+                    'Removing pre existing '
+                    'build directory: %s' % (
+                        self.build_dir)
+                )
+                shutil.rmtree(self.build_dir)
 
 
         self.inner_dir = self.options.get('inner-dir', None)
@@ -769,24 +805,36 @@ class MinitageCommonRecipe(object):
         )
 
     def _set_compilation_flags(self):
-        """Set CFALGS/LDFLAGS."""
+        """Set CFLAGS/LDFLAGS."""
         self.logger.debug('Setting compilation flags')
+        # filter
+        if 'win' in self.uname:
+            os.environ['CFLAGS'] = os.environ.get('CFLAGS', '').replace('-fPIC', '')
+
+        self_libdirs = [self.prefix+'/lib']
+        if 'win' in self.uname:
+            self_libdirs.append(self.prefix+'/bin')
+
         if self._skip_flags:
             self.logger.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             self.logger.warning('!!! Build variable settings has been disabled !!!')
             self.logger.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             return
-        os.environ['CFLAGS']  = ' '.join([os.environ.get('CFLAGS', ''),
-                                          '  %s' % self.cflags]).strip()
-        os.environ['LDFLAGS']  = ' '.join([os.environ.get('LDFLAGS', '')
-                                           , '  %s' % self.ldflags]).strip()
+        os.environ['CFLAGS']  = ' '.join(
+            [os.environ.get('CFLAGS', ''), '  %s' % self.cflags]
+        ).strip()
+
+        os.environ['LDFLAGS']  = ' '.join(
+            [os.environ.get('LDFLAGS', ''), '  %s' % self.ldflags]
+        ).strip()
 
         if self.rpath:
             os.environ['LD_RUN_PATH'] = appendVar(
                 os.environ.get('LD_RUN_PATH', ''),
-                [s for s in self.rpath\
+                [s
+                 for s in self.rpath
                  if s.strip()]
-                + [os.path.join(self.prefix, 'lib')],
+                + self_libdirs ,
                 self.paths_sep
             )
 
@@ -813,21 +861,30 @@ class MinitageCommonRecipe(object):
 
             os.environ['LDFLAGS'] = appendVar(
                 os.environ.get('LDFLAGS',''),
-                ['-L%s -Wl,-rpath -Wl,%s' % (s,s) \
-                 for s in self.libraries + [os.path.join(self.prefix, 'lib')]
+                ['-L%s' % (s) \
+                 for s in self.libraries + self_libdirs
                  if s.strip()]
                 + [darwin_ldflags] ,
                 ' '
             )
-
+            
+            # rpath is neither supported by  native windows or cygwin
+            if not 'win' in self.uname:
+                os.environ['LDFLAGS'] = appendVar(
+                    os.environ.get('LDFLAGS',''),
+                    ['-Wl,-rpath -Wl,\'%s\'' % (s) \
+                     for s in self.libraries + self_libdirs
+                     if s.strip()],
+                    ' '
+                )
+                
+            # system paths not always automatic under cygwin
             if self.uname == 'cygwin':
                 os.environ['LDFLAGS'] = ' '.join(
-                    [os.environ['LDFLAGS'],
-                     '-L/usr/lib -L/lib -Wl,-rpath -Wl,/usr/lib -Wl,-rpath -Wl,/lib']
+                    [os.environ['LDFLAGS'], '-L/usr/lib -L/lib']
                 )
         if self.libraries_names:
             os.environ['LDFLAGS'] = ' '.join([os.environ.get('LDFLAGS', ''), self.libraries_names]).strip()
-
         if self.minimerge:
             os.environ['CFLAGS']  = ' '.join([
                 os.environ.get('CFLAGS', ' '),
@@ -850,21 +907,21 @@ class MinitageCommonRecipe(object):
         if self.includes:
             os.environ['CFLAGS'] = appendVar(
                 os.environ.get('CFLAGS', ''),
-                ['-I%s' % s \
+                ['-I\'%s\'' % s \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
             )
             os.environ['CPPFLAGS'] = appendVar(
                 os.environ.get('CPPFLAGS', ''),
-                ['-I%s' % s \
+                ['-I\'%s\'' % s \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
             )
             os.environ['CXXFLAGS'] = appendVar(
                 os.environ.get('CXXFLAGS', ''),
-                ['-I%s' % s \
+                ['-I\'%s\'' % s \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
@@ -873,7 +930,7 @@ class MinitageCommonRecipe(object):
             os.environ[key] = RESPACER(' ', os.environ.get(key, '')).strip()
         # honour msvc
         #if self.cflags:
-        
+
         if sys.platform.startswith('win'):
             os.environ['INCLUDE'] = appendVar(
                 os.environ.get('INCLUDE', ''),
@@ -955,7 +1012,7 @@ class MinitageCommonRecipe(object):
             hooked = True
             self.logger.info('Executing %s' % hook)
             script = self.options[hook]
-            filename, callable = script.split(':')
+            filename, column, callable = script.rpartition(':')
             filename = norm_path(os.path.abspath(filename))
             module = imp.load_source('script', filename)
             getattr(module, callable.strip())(
@@ -970,15 +1027,24 @@ class MinitageCommonRecipe(object):
     def _system(self, cmd):
         """Running a command."""
         self.logger.info('Running %s' % cmd)
-        self.go_inner_dir()
-        p = subprocess.Popen(cmd, env=os.environ, shell=True)
         ret = 0
-        try:
-            sts = os.waitpid(p.pid, 0)
-            ret = sts [1]
-        except:
-            ret = 1
-        # ret = os.system(cmd)
+        self.go_inner_dir()
+        if sys.platform.startswith('win'):
+            _, fic = tempfile.mkstemp()
+            dfic = open(fic, 'w')
+            dfic.write('#!/bin/bash\n')
+            dfic.write('%s\n\n' % cmd.replace('\\','\\\\'))
+            dfic.flush()
+            dfic.close()
+            ret = os.system('sh --login "%s"' % fic)
+        else:
+            p = subprocess.Popen(cmd, env=os.environ, shell=True)
+            try:
+                sts = os.waitpid(p.pid, 0)
+                ret = sts [1]
+            except Exception, e:
+                ret = 1
+            # ret = os.system(cmd)
         if ret:
             raise  core.MinimergeError('Command failed: %s' % cmd)
 
