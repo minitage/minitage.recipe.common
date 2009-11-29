@@ -60,7 +60,7 @@ from minitage.core import core
 __logger__ = 'minitage.recipe'
 
 RESPACER = re.compile('\s\s*', re.I|re.M|re.U|re.S).sub
-
+ENDLINE = re.compile("\\n", re.S|re.U|re.I)
 def norm_path(path):
     if path:
         if sys.platform.startswith('win'):
@@ -276,24 +276,35 @@ class MinitageCommonRecipe(object):
         self._skip_flags = self.options.get('skip-flags', False)
 
         # compilation flags
-        self.includes = splitstrip(self.options.get('includes', ''))
+        self.includes = splitstrip(self.options.get('includes-%s'%self.uname, 
+                                   self.options.get('includes', '')))
+
         self.cflags = RESPACER(
             ' ',
-            self.options.get( 'cflags', '').replace('\n', '')
+            self.options.get('cflags-%s'%self.uname,  
+                              self.options.get( 'cflags', '')).replace('\n', '')
         ).strip()
         self.ldflags = RESPACER(
             ' ',
-            self.options.get( 'ldflags', '').replace('\n', '')
+            self.options.get('ldflags-%s'%self.uname,
+                             self.options.get( 'ldflags', '')).replace('\n', '')
         ).strip()
         self.includes += [a
-                          for a in splitstrip(self.options.get('includes-dirs', ''))]
+                          for a in splitstrip(
+                              self.options.get('includes-dirs-%s'%self.uname, 
+                                             self.options.get('includes-dirs', ''))
+                          )]
         self.libraries = [a
-                          for a in splitstrip(self.options.get('library-dirs', ''))]
+                          for a in splitstrip(
+                              self.options.get('library-dirs-%s'%self.uname, 
+                              self.options.get('library-dirs', '')))]
         self.libraries_names = ' '
         for l in self.options.get('libraries-%s'%self.uname,self.options.get('libraries', '')).split():
             self.libraries_names += '-l%s ' % l
         self.rpath = [norm_path(a)
-                      for a in splitstrip(self.options.get('rpath', ''))]
+                      for a in splitstrip(self.options.get('rpath-%s'%self.uname, 
+                                          self.options.get('rpath', '')))]
+                                          
 
         # separate archives in downloaddir/minitage
         self.download_cache = os.path.join(
@@ -329,6 +340,14 @@ class MinitageCommonRecipe(object):
             [norm_path(a) for a in splitstrip(
                 self.options.get(
                     '%s-patches' % (self.uname.lower()),
+                    ''
+                )
+            )]
+        )
+        self.patches.extend(
+            [norm_path(a) for a in splitstrip(
+                self.options.get(
+                    'patches-%s' % (self.uname.lower()),
                     ''
                 )
             )]
@@ -466,16 +485,19 @@ class MinitageCommonRecipe(object):
                     dg = m.groupdict()
                     s = '/%s%s' % (dg['letter'], dg['path'])
                 s = s.replace('\\', '/')
+            if os.path.exists('/'.join((s, 'bin',))):
                 self.libraries.append('/'.join((s, 'bin',)))
+                self.path.append('/'.join((s, 'bin',)))
+            if os.path.exists('/'.join((s, 'sbin',))):
                 self.libraries.append('/'.join((s, 'sbin',)))
-                self.rpath.append('/'.join((s, 'bin',)))
-                self.rpath.append('/'.join((s, 'sbin',)))
-            self.includes.append('/'.join((s, 'include',)))
-            self.libraries.append('/'.join((s, 'lib',)))
-            self.rpath.append('/'.join((s, 'lib',)))
-            self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
-            self.path.append('/'.join((s, 'bin',)))
-            self.path.append('/'.join((s, 'sbin',)))
+                self.path.append('/'.join((s, 'sbin',)))
+            if os.path.exists('/'.join((s, 'include',))):
+                self.includes.append('/'.join((s, 'include',)))
+            if os.path.exists('/'.join((s, 'lib',))):
+                self.libraries.append('/'.join((s, 'lib',)))
+                self.rpath.append('/'.join((s, 'lib',)))
+            if os.path.exists('/'.join((s, 'lib', 'pkgconfig',))):
+                self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
 
         # Defining the python interpreter used to install python stuff.
         # using the one defined in the key 'executable'
@@ -526,7 +548,7 @@ class MinitageCommonRecipe(object):
                 buildout.get('buildout', {}).get('python', '').strip(), {}
                 ).get('executable', sys.executable)
 
-        # if there is no '/' in the executalbe, just search for in the path
+        # if there is no '/' in the executable, just search for in the path
         if not self.executable.startswith('/'):
             self._set_path()
             try:
@@ -534,6 +556,57 @@ class MinitageCommonRecipe(object):
             except IOError, e:
                 raise core.MinimergeError('Python executable '
                                  'was not found !!!\n\n%s' % e)
+        
+        # compiler binaries
+        self.cc = self.options.get('cc-%s'%self.uname,  self.options.get('cc',  '')).strip()
+        self.cpp = self.options.get('cpp-%s'%self.uname, self.options.get('cpp', '')).strip()
+        self.cplusplus = self.options.get('cplusplus-%s'%self.uname, 
+                                          self.options.get('cplusplus', '')).strip()
+        
+        # support for mingw32 on cygwin + minitage
+        self.mingw_prefix = None
+        if sys.platform.startswith('cygwin') and 'mingw' in options:
+            mingw = ''
+            mingwmsgbase = '%s' % (
+                    "\n\n"
+                    "MingW compiler not found.\n"
+                    "You can have one from http://tdragon.net/recentgcc/\n"
+                    "Please install a mingw gcc4 installation in\n"
+                )
+            mingw_present = True
+            if 'mingw-path' in options:
+                mingw = options.get('minw-path')
+            elif self.minimerge:
+                mingw = os.path.join(self.minimerge._prefix, 'mingw')
+            if not os.path.exists(mingw):
+                msg = '%s' % (
+                    "\n\n"
+                    "%s\n"
+                    "\t%s"
+                    "\n\n"
+                    "You can either set mingw-path to a valid mingw (gcc4) installation.\n"
+                    "" % (mingwmsgbase, mingw)
+                )
+                raise Exception(msg)
+            self.mingw_prefix = mingw = os.path.abspath(mingw)
+            self.cc = os.path.join(mingw, 'bin', 'gcc')
+            self.cpp = os.path.join(mingw,'bin', 'cpp')
+            self.cplusplus = os.path.join(mingw,'bin', 'c++')
+            mingw_bins = []
+            add_msg = ''
+            try:
+                mingw_bins = [p.replace('.exe', '') 
+                              for p in os.listdir(os.path.join(mingw, 'bin'))]
+            except Exception, e:
+                add_msg += 'mingw prefix seems not to be valid, missing bin directory!'
+            for path in self.cc, self.cpp, self.cplusplus:
+                if not os.path.basename(path) in mingw_bins:
+                    raise Exception("\n\n%s\n\t%s\n\n%s\n\n" % (
+                                        mingwmsgbase, 
+                                        self.mingw_prefix,
+                                        add_msg
+                                    )
+                    )
 
         # which python version are we using ?
         self.executable_version = os.popen(
@@ -604,7 +677,20 @@ class MinitageCommonRecipe(object):
                  + [self.buildout['buildout']['eggs-directory']] :
             self.pypath.append(s)
 
-        # cleaning if we have a prior compilation step.
+        # avoid relative path in aboslute path, it breaks mingw compiler !
+        # also filtering out double includes/such
+        for col in ('rpath', 
+                    'libraries', 'includes', 
+                    'pypath', 'pkgconfigpath'):
+            newcol = []
+            for j in getattr(self, col):
+                if j.startswith('/') and  ('..' in j):
+                    j = os.path.abspath(j)
+                if not j in newcol:
+                    newcol.append(j)
+            setattr(self, col, newcol)
+        
+        # cleaning if we have a prior compilation step.*
         if os.path.isdir(self.tmp_directory):
             self.logger.info(
                 'Removing pre existing '
@@ -625,7 +711,7 @@ class MinitageCommonRecipe(object):
         self.inner_dir = self.options.get('inner-dir', None)
         if self.inner_dir:
             self.inner_dir = os.path.join(self.tmp_directory, self.inner_dir)
-
+        
     def _download(self,
                   url=None,
                   destination=None,
@@ -784,6 +870,7 @@ class MinitageCommonRecipe(object):
         # uniquify the list
         pypath = uniquify(pypath)
         os.environ['PYTHONPATH'] = self.paths_sep.join(pypath)
+        os.environ['MINITAGE_PYTHONPATH'] = os.environ['PYTHONPATH'] 
 
 
     def _set_path(self):
@@ -794,7 +881,7 @@ class MinitageCommonRecipe(object):
                      + [self.buildout['buildout']['directory'],
                         self.options['location']]\
                      , self.paths_sep)
-
+        os.environ['MINITAGE_PATH'] = os.environ['PATH'] 
 
     def _set_pkgconfigpath(self):
         """Set PKG-CONFIG-PATH."""
@@ -803,10 +890,20 @@ class MinitageCommonRecipe(object):
         os.environ['PKG_CONFIG_PATH'] = self.paths_sep.join(
             uniquify(self.pkgconfigpath+pkgp)
         )
+        os.environ['MINITAGE_PKG_CONFIG_PATH'] = os.environ['PKG_CONFIG_PATH'] 
 
     def _set_compilation_flags(self):
         """Set CFLAGS/LDFLAGS."""
         self.logger.debug('Setting compilation flags')
+        
+        # compiler binaries support
+        if self.cpp:
+            os.environ['CPP'] = self.cpp
+        if self.cc:
+            os.environ['CC'] = self.cc
+        if self.cplusplus:
+            os.environ['C++'] = self.cplusplus
+
         # filter
         if 'win' in self.uname:
             os.environ['CFLAGS'] = os.environ.get('CFLAGS', '').replace('-fPIC', '')
@@ -926,11 +1023,8 @@ class MinitageCommonRecipe(object):
                  if s.strip()]
                 ,' '
             )
-        for key in ('CFLAGS', 'CPPFLAGS', 'CXXFLAGS', 'LDFLAGS', 'LD_RUN_PATH'):
-            os.environ[key] = RESPACER(' ', os.environ.get(key, '')).strip()
+            
         # honour msvc
-        #if self.cflags:
-
         if sys.platform.startswith('win'):
             os.environ['INCLUDE'] = appendVar(
                 os.environ.get('INCLUDE', ''),
@@ -948,7 +1042,18 @@ class MinitageCommonRecipe(object):
             )
             for key in ('INCLUDE', 'LIB'):
                 os.environ[key] = RESPACER(' ', os.environ.get(key, '')).strip()
-
+                
+        # unpspacing and saving minitage values in environment
+        for k in ('MAKEOPTS',
+                  'CC', 'CPP', 'C++',
+                  'CFLAGS', 'LDFLAGS', 
+                  'INCLUDE', 'LIB', 
+                  'LD_LIBRARY_PATH', 'LD_RUN_PATH',
+                  'CPPFLAGS', 'CXXFLAGS',
+                  ):
+            os.environ[k] = RESPACER(' ', os.environ.get(k, '')).strip()
+            os.environ['MINITAGE_%s'%k] = os.environ[k]         
+        
     def _unpack(self, fname, directory=None):
         """Unpack something"""
         if not directory:

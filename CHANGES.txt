@@ -6,6 +6,7 @@ CHANGELOG
 --------
 
     - fix for mercurial checkouts
+    - add many per/os options
     - win32 fix
     - API fix
     - indentation fix

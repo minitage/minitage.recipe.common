@@ -42,10 +42,20 @@ Options
       Where::
 
             fetch_type ::= bzr | hg | git | static (for ftp://, file://, http:// and local files) | svn
-
+            
+    UNAME is a platform identifier from:
+    
+        - linux
+        - darwin
+        - freebsd
+        - freebsd(6,7,8)
+        - snowleopard
+        - leopard
+        - cygwin  
+    
     - executable
         python executable to use
-    - url (backward cmpatibility)
+    - url(-UNAME) (backward cmpatibility)
         url to get the source from, in the previous urls syntax
     - scm
         default scm to use (a valid minitage fetch factory to use (static, git, svn, bzr, hg).)
@@ -62,30 +72,38 @@ Options
         patches to apply [see cmmi recipe for documentation]
     - patch
         A patch to apply, compatibility with zc.recipe.cmmi
-    - uname-patches
-        - patch to apply to a system or a favor of this system (linux, darwin, freebsd, freebsd(6,7,8), snowleopard, leopard)
+    - patches-UNAME / UNAME-patches
+        - patches to apply to a system or a favor of this system (linux, darwin, freebsd, freebsd, freebsd(6,7,8), snowleopard, leopard, cygwin)
     - location
         where to put the build result. (default to parts/PART_NAME)
-    - includes:
+    - cc(-UNAME)
+        CC compiler to use (set env['CC'], default not set
+    - cpp(-UNAME)
+        CPP compiler to use (set env['CPP'], default not set
+    - cplusplus(-UNAME)
+        c++ compiler to use (set env['C++'], default not set
+    - includes(-UNAME)
         directories to add to the include search (compatibility)
-    - ldflags
+    - ldflags(-UNAME)
         LDFLAGS to set at compilation time
-    - cflags
+    - cflags(-UNAME)
         CFLAGS to give to the compiler
-    - includes-dirs
+    - includes-dirs(-UNAME)
         Directories to add to the include paths  [see cmmi recipe for documentation]
-    - libraries:
+    - libraries(-UNAME)
         libraries to give to the linker eg: libiconv
-    - library-dirs
+    - library-dirs(-UNAME)
         Directories to add to the linker, and they will be added as -rpath too. [see cmmi recipe for documentation]
+    - rpath(-UNAME)
+        Directories to add as -rpath.
     - skip-flags: do not set CFLAGS/LDFLAGS/LD_RUN_PATH at all.
     - environment
         a part name where we can get key/values to add to the build environment [see cmmi recipe for documentation]
-    - path
+    - path(-UNAME)
         line separated list of paths to append to $PATH during build
-    - pkgconfigpath
+    - pkgconfigpath(-UNAME)
         line separated list of paths to append to $PKGCONFIGPATH during build [see cmmi recipe for documentation]
-    - pythonpath
+    - pythonpath(-UNAME)
         line separated list of paths to append to $PYTHONPATH during build
 
     - osx-target: -mmacosx-version-min setting, wanting users will know what that means ;)
