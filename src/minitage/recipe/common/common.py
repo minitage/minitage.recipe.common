@@ -1027,24 +1027,28 @@ class MinitageCommonRecipe(object):
                 self.minimerge._config._sections.get('minitage.compiler', {}).get('makeopts', ''),
                 ' ']
             )
+        quote = ''
+        if self.uname.startswith('win'):
+            quote ='\''
+
         if self.includes:
             os.environ['CFLAGS'] = appendVar(
                 os.environ.get('CFLAGS', ''),
-                ['-I\'%s\'' % s \
+                ['-I%s%s%s' % (quote, s, quote) \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
             )
             os.environ['CPPFLAGS'] = appendVar(
                 os.environ.get('CPPFLAGS', ''),
-                ['-I\'%s\'' % s \
+                ['-I%s%s%s' % (quote, s, quote) \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
             )
             os.environ['CXXFLAGS'] = appendVar(
                 os.environ.get('CXXFLAGS', ''),
-                ['-I\'%s\'' % s \
+                ['-I%s%s%s' % (quote, s, quote) \
                  for s in self.includes\
                  if s.strip()]
                 ,' '
