@@ -4,7 +4,8 @@ CHANGELOG
 
 ->UP
 --------
-
+    
+    - add an helper to write env files
     - fix for mercurial checkouts
     - add many per/os options
     - win32 fix

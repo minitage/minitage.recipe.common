@@ -707,11 +707,21 @@ class MinitageCommonRecipe(object):
                 )
                 shutil.rmtree(self.build_dir)
 
-
         self.inner_dir = self.options.get('inner-dir', None)
         if self.inner_dir:
             self.inner_dir = os.path.join(self.tmp_directory, self.inner_dir)
-        
+            
+    def write_env(self):
+        if 'debug' in self.options:
+            fic = open(os.path.join(self.tmp_directory, 'build.env'), 'w')
+            fic.write('\n')
+            for key in [k for k in os.environ
+                        if ((not '!' in k))] :
+                fic.write('export %s="%s"\n' % (key, 
+                                                os.environ[key].replace('\\', '\\\\'))
+                )
+            fic.write('\n')
+
     def _download(self,
                   url=None,
                   destination=None,
@@ -902,7 +912,7 @@ class MinitageCommonRecipe(object):
         if self.cc:
             os.environ['CC'] = self.cc
         if self.cplusplus:
-            os.environ['C++'] = self.cplusplus
+            os.environ['CPLUSPLUS'] = self.cplusplus
 
         # filter
         if 'win' in self.uname:
@@ -1045,14 +1055,14 @@ class MinitageCommonRecipe(object):
                 
         # unpspacing and saving minitage values in environment
         for k in ('MAKEOPTS',
-                  'CC', 'CPP', 'C++',
+                  'CC', 'CPP', 'CPLUSPLUS',
                   'CFLAGS', 'LDFLAGS', 
                   'INCLUDE', 'LIB', 
                   'LD_LIBRARY_PATH', 'LD_RUN_PATH',
                   'CPPFLAGS', 'CXXFLAGS',
                   ):
             os.environ[k] = RESPACER(' ', os.environ.get(k, '')).strip()
-            os.environ['MINITAGE_%s'%k] = os.environ[k]         
+            os.environ['MINITAGE_%s'%k.replace('+', 'PLUS')] = os.environ[k]         
         
     def _unpack(self, fname, directory=None):
         """Unpack something"""
