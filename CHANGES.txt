@@ -5,6 +5,7 @@ CHANGELOG
 ->UP
 --------
     
+    - add os subrelease mecanism (cygwin2)
     - add an helper to write env files
     - fix for mercurial checkouts
     - add many per/os options

@@ -150,13 +150,29 @@ class MinitageCommonRecipe(object):
 
         # system variables
         self.uname = sys.platform.lower()
+        self.os_release = self.options.get('os-release', self.uname)
         if 'freebsd' in self.uname:
             self.uname = 'freebsd'
         if 'linux' in self.uname:
             self.uname = 'linux'
         if self.uname.startswith('win') and self.uname != 'cygwin':
             self.uname = 'win'
+        if 'cygwin' in self.uname:
+             if os.uname()[2][:3] != '1.5':
+                self.os_release = 'cygwin2'
 
+        # overiding options with subrelease ones if any
+        if self.os_release != self.uname:
+            for o in self.options:
+                if o.endswith('-cygwin2'):
+                    key = o.replace(self.os_release, self.uname)
+                    value = self.options[o].strip()
+                    if value:
+                        self.options[key] = value
+                    else:
+                        if key in self.options:
+                            del self.options[key]
+                
         # build directory
         self.build_dir = norm_path(
             self.options.get('build-dir-%s'%self.uname,
