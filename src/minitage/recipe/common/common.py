@@ -1082,8 +1082,9 @@ class MinitageCommonRecipe(object):
                   'LD_LIBRARY_PATH', 'LD_RUN_PATH',
                   'CPPFLAGS', 'CXXFLAGS',
                   ):
-            os.environ[k] = RESPACER(' ', os.environ.get(k, '')).strip()
-            os.environ['MINITAGE_%s'%k.replace('+', 'PLUS')] = os.environ[k]
+            if k in os.environ:
+                os.environ[k] = RESPACER(' ', os.environ.get(k, '')).strip()
+                os.environ['MINITAGE_%s'%k.replace('+', 'PLUS')] = os.environ[k]
 
     def _unpack(self, fname, directory=None):
         """Unpack something"""
