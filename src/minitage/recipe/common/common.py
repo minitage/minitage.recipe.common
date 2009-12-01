@@ -466,8 +466,14 @@ class MinitageCommonRecipe(object):
             message = 'Problem looking for \'%s\' minibuild'
             self.logger.debug(message % self.str_minibuild)
 
+        
         if self.minibuild:
-            for dep in self.minibuild.dependencies :
+            if self.minibuild.category == 'eggs':
+                mpackages, pyvers = self.minimerge._select_pythons([self.minibuild])
+                for p in mpackages:
+                    if not p in self.minibuild.dependencies:
+                        self.minibuild.dependencies.append(p.name)
+            for dep in self.minibuild.dependencies:
                 m = None
                 try:
                     m = self.minimerge._find_minibuild(dep)
@@ -488,6 +494,7 @@ class MinitageCommonRecipe(object):
                 self.minitage_section.get('dependencies', '')
             ) + minibuild_dependencies ]
         )
+
 
         # sometime we install system libraries as eggs because they depend on
         # a particular python version !
