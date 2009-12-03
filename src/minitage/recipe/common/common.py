@@ -952,6 +952,7 @@ class MinitageCommonRecipe(object):
             return
         os.environ['CFLAGS']  = ' '.join(
             [os.environ.get('CFLAGS', ''), '  %s' % self.cflags]
+
         ).strip()
 
         os.environ['LDFLAGS']  = ' '.join(
