@@ -914,6 +914,12 @@ class MinitageCommonRecipe(object):
                      + [self.buildout['buildout']['directory'],
                         self.options['location']]\
                      , self.paths_sep)
+        if 'cygwin' in self.uname:
+            paths = []
+            noecho = [paths.append(p) 
+                      for p in os.environ['PATH'].split(self.paths_sep)
+                      if not p in paths]
+            os.environ['PATH'] = self.paths_sep.join(paths)
         os.environ['MINITAGE_PATH'] = os.environ['PATH']
 
     def _set_pkgconfigpath(self):
