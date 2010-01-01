@@ -17,6 +17,7 @@ CHANGELOG
 
         * darwin : all macs
         * leopard, snowleopard for a specific one
+    - Add extra-paths to PYTHONPATH while setting PYTHONPATH
 
 1.42
 ------

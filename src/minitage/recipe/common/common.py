@@ -900,6 +900,8 @@ class MinitageCommonRecipe(object):
                     add = False
             if add :
                 pypath.append(entry)
+        if getattr(self, 'extra_paths'):
+            pypath.extend(self.extra_paths)
         # uniquify the list
         pypath = uniquify(pypath)
         os.environ['PYTHONPATH'] = self.paths_sep.join(pypath)
