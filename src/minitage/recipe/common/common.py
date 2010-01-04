@@ -415,6 +415,12 @@ class MinitageCommonRecipe(object):
             buildout['buildout'].get('directory'),
             '__minitage__%s__tmp' % name
         )
+        
+        if self.is_win():
+            for attr in 'tmp_directory',:
+                v = getattr(self, attr)
+                if isinstance(v, str):
+                    setattr(self, attr, os.path.normpath(v))
 
         # minitage specific
         # we will search for (priority order)
@@ -1231,5 +1237,7 @@ class MinitageCommonRecipe(object):
         if self.inner_dir:
             os.chdir(self.inner_dir)
 
+    def is_win(self):
+        return (getattr(self, 'uname', 'none') == 'win')
 
 # vim:set et sts=4 ts=4 tw=80:
