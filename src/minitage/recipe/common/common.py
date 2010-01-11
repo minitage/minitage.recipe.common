@@ -1171,7 +1171,7 @@ class MinitageCommonRecipe(object):
             hooked = True
             self.logger.info('Executing %s' % hook)
             script = self.options[hook]
-            filename, column, callable = script.rpartition(':')
+            filename, callable = script.split(':')
             filename = norm_path(os.path.abspath(filename))
             module = imp.load_source('script', filename)
             getattr(module, callable.strip())(
