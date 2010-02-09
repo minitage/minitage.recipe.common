@@ -384,7 +384,7 @@ class MinitageCommonRecipe(object):
             kv = uname()[2]
             if kv == '9.8.0':
                 self.osxflavor = 'leopard'
-            if kv == '10.0.0':
+            if kv.startswith('10.'):
                 self.osxflavor = 'snowleopard'
             if self.osxflavor:
                 self.patches.extend(
@@ -415,7 +415,7 @@ class MinitageCommonRecipe(object):
             buildout['buildout'].get('directory'),
             '__minitage__%s__tmp' % name
         )
-        
+
         if self.is_win():
             for attr in 'tmp_directory',:
                 v = getattr(self, attr)
@@ -472,7 +472,7 @@ class MinitageCommonRecipe(object):
             message = 'Problem looking for \'%s\' minibuild'
             self.logger.debug(message % self.str_minibuild)
 
-        
+
         if self.minibuild:
             if self.minibuild.category == 'eggs':
                 mpackages, pyvers = self.minimerge._select_pythons([self.minibuild])
@@ -924,7 +924,7 @@ class MinitageCommonRecipe(object):
                      , self.paths_sep)
         if 'cygwin' in self.uname:
             paths = []
-            noecho = [paths.append(p) 
+            noecho = [paths.append(p)
                       for p in os.environ['PATH'].split(self.paths_sep)
                       if not p in paths]
             os.environ['PATH'] = self.paths_sep.join(paths)
