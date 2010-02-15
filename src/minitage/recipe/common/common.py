@@ -395,6 +395,13 @@ class MinitageCommonRecipe(object):
                         )
                     )]
                 )
+            if self.osxflavor == 'snowleopard':
+                self.osx_target = '10.6'
+            if self.osxflavor == 'leopard':
+                self.osx_target = '10.5'
+            if self.force_osx_target:
+                if self.force_osx_target.strip() != 'true':
+                    self.osx_target = self.force_osx_target.strip()
 
         # path we will put in env. at build time
         self.path = splitstrip(self.options.get('path-%s' % self.uname, self.options.get('path', '')))
@@ -986,27 +993,16 @@ class MinitageCommonRecipe(object):
         quote = ''
         if self.uname.startswith('win'):
             quote ='\''
-        if self.libraries:
-            darwin_ldflags = ''
-            if self.uname == 'darwin':
-                # need to cut backward comatibility in the linker
-                # to get the new rpath feature present
-                # >= osx Leopard
-                if not (self.osx_target == 'false'):
-                    if self.osxflavor == 'snowleopard':
-                        self.osx_target = '10.6'
-                    if self.osxflavor == 'leopard':
-                        self.osx_target = '10.5'
-                    if self.force_osx_target:
-                        mdt = self.force_osx_target
-                        if self.force_osx_target.strip() == 'true':
-                            if self.osxflavor == 'snowleopard':
-                                mdt = '10.6'
-                            if self.osxflavor == 'leopard':
-                                mdt = '10.5'
-                        os.environ['MACOSX_DEPLOYMENT_TARGET'] = mdt
-                darwin_ldflags += ' -mmacosx-version-min=%s'  % self.osx_target
+        darwin_ldflags = ''
+        if self.uname == 'darwin':
+            # need to cut backward comatibility in the linker
+            # to get the new rpath feature present
+            # >= osx Leopard
+            if not (self.osx_target == 'false'):
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = self.osx_target
+            darwin_ldflags += ' -mmacosx-version-min=%s'  % self.osx_target
 
+        if self.libraries:
             os.environ['LDFLAGS'] = appendVar(
                 os.environ.get('LDFLAGS',''),
                 ['-L%s' % (s) \
@@ -1015,7 +1011,6 @@ class MinitageCommonRecipe(object):
                 + [darwin_ldflags] ,
                 ' '
             )
-
             # rpath is neither supported by  native windows or cygwin
             if not 'win' in self.uname:
                 os.environ['LDFLAGS'] = appendVar(
