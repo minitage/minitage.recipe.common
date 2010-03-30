@@ -250,11 +250,22 @@ class MinitageCommonRecipe(object):
 
         # system variables
         self.cwd = os.getcwd()
-        self.minitage_directory = norm_path(
+        cfg = norm_path(
             os.path.abspath(
-                os.path.join(self.buildout['buildout']['directory'], '..', '..')
+                os.path.join(self.buildout['buildout']['directory'], '..', '..',
+                            'etc', 'minitage.cfg')
             )
         )
+        if os.path.exists(cfg):
+            # inside a project?
+            self.minitage_directory = norm_path(
+                os.path.abspath(
+                    os.path.join(self.buildout['buildout']['directory'], '..', '..')
+                )
+            )
+        else:
+            # default to python prefix
+            self.minitage_directory = norm_path(os.path.abspath(sys.prefix))
 
         # destination
         options['location'] = norm_path(
@@ -507,7 +518,6 @@ class MinitageCommonRecipe(object):
                 self.minitage_section.get('dependencies', '')
             ) + minibuild_dependencies ]
         )
-
 
         # sometime we install system libraries as eggs because they depend on
         # a particular python version !
