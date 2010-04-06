@@ -1231,11 +1231,13 @@ class MinitageCommonRecipe(object):
             f = [i
                  for i in os.listdir(directory)
                  if (not os.path.isdir(os.path.join(directory, i)))
-                 and (not i.startswith('.'))]
+                 and (not i.startswith('.'))
+                 and (not i.startswith('PaxHeaders'))]
             d = [i
                  for i in os.listdir(directory)
                  if os.path.isdir(os.path.join(directory, i))
-                 and (not i.startswith('.'))]
+                 and (not i.startswith('.'))
+                 and (not i.startswith('PaxHeaders'))]
             if len(f) < 2 and d:
                 top = os.path.join(directory, d[0])
         return top
