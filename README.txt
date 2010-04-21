@@ -16,7 +16,7 @@ That's why many options of the descendant recipes are from there.
 
 
 ======================================
-Makina Corpus Sponsorised software
+Makina Corpus sponsorised software
 ======================================
 
   http://www.makina-corpus.com & http://makina-corpus.org
