@@ -70,6 +70,7 @@ def norm_path(path):
                 path = os.path.normpath(path)
     return path
 
+
 def uniquify(l):
     result = []
     for i in l:
@@ -132,6 +133,20 @@ class MinitageCommonRecipe(object):
     """
     Downloads and installs a distutils Python distribution.
     """
+    def appendPaths(self, s):
+        if os.path.exists('/'.join((s, 'bin',))):
+            self.libraries.append('/'.join((s, 'bin',)))
+            self.path.append('/'.join((s, 'bin',)))
+        if os.path.exists('/'.join((s, 'sbin',))):
+            self.libraries.append('/'.join((s, 'sbin',)))
+            self.path.append('/'.join((s, 'sbin',)))
+        if os.path.exists('/'.join((s, 'include',))):
+            self.includes.append('/'.join((s, 'include',)))
+        if os.path.exists('/'.join((s, 'lib',))):
+            self.libraries.append('/'.join((s, 'lib',)))
+            self.rpath.append('/'.join((s, 'lib',)))
+        if os.path.exists('/'.join((s, 'lib', 'pkgconfig',))):
+            self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))  
     def __init__(self, buildout, name, options):
         """__init__.
         The code is voulantary not splitted
@@ -519,32 +534,6 @@ class MinitageCommonRecipe(object):
             ) + minibuild_dependencies ]
         )
 
-        # sometime we install system libraries as eggs because they depend on
-        # a particular python version !
-        # There is there we suceed in getting their libraries/include into
-        # enviroenmment by dealing with them along with classical
-        # system dependencies.
-        for s in self.minitage_dependencies + self.minitage_eggs:
-            if 'win' in self.uname:
-                m = letter_re.match(s)
-                if m:
-                    dg = m.groupdict()
-                    s = '/%s%s' % (dg['letter'], dg['path'])
-                s = s.replace('\\', '/')
-            if os.path.exists('/'.join((s, 'bin',))):
-                self.libraries.append('/'.join((s, 'bin',)))
-                self.path.append('/'.join((s, 'bin',)))
-            if os.path.exists('/'.join((s, 'sbin',))):
-                self.libraries.append('/'.join((s, 'sbin',)))
-                self.path.append('/'.join((s, 'sbin',)))
-            if os.path.exists('/'.join((s, 'include',))):
-                self.includes.append('/'.join((s, 'include',)))
-            if os.path.exists('/'.join((s, 'lib',))):
-                self.libraries.append('/'.join((s, 'lib',)))
-                self.rpath.append('/'.join((s, 'lib',)))
-            if os.path.exists('/'.join((s, 'lib', 'pkgconfig',))):
-                self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
-
         # Defining the python interpreter used to install python stuff.
         # using the one defined in the key 'executable'
         # fallback to sys.executable or
@@ -717,6 +706,27 @@ class MinitageCommonRecipe(object):
                 self.minitage_section.get('eggs', '')
             ) + minibuild_eggs]
         )
+        # sometime we install system libraries as eggs because they depend on
+        # a particular python version !
+        # There is there we suceed in getting their libraries/include into
+        # enviroenmment by dealing with them along with classical
+        # system dependencies.
+        for s in self.minitage_eggs:
+            if 'win' in self.uname:
+                m = letter_re.match(s)
+                if m:
+                    dg = m.groupdict()
+                    s = '/%s%s' % (dg['letter'], dg['path'])
+                s = s.replace('\\', '/')
+            self.appendPaths(s) 
+        for s in self.minitage_dependencies:
+            if 'win' in self.uname:
+                m = letter_re.match(s)
+                if m:
+                    dg = m.groupdict()
+                    s = '/%s%s' % (dg['letter'], dg['path'])
+                s = s.replace('\\', '/')
+            self.appendPaths(s)
 
         for s in self.minitage_eggs \
                  + [self.site_packages_path] \
