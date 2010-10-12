@@ -675,9 +675,6 @@ class MinitageCommonRecipe(object):
                     raise core.MinimergeError('Your python executable seems to point to a directory!!!')
             except:
                 raise
-        if not os.path.isdir(self.executable_prefix):
-            message = 'Python seems not to find its prefix : %s' % self.executable_prefix
-            self.logger.warning(message)
 
         self.executable_lib = os.path.join(
                         self.executable_prefix,
