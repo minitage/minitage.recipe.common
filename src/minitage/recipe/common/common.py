@@ -1028,6 +1028,14 @@ class MinitageCommonRecipe(object):
                 + [darwin_ldflags] ,
                 ' '
             )
+            os.environ['LD_LIBRARY_PATH'] = appendVar(
+                os.environ.get('LD_LIBRARY_PATH', ''),
+                [s
+                 for s in self.rpath
+                 if s.strip()]
+                + self_libdirs ,
+                self.paths_sep
+            ) 
             # rpath is neither supported by  native windows or cygwin
             if not 'win' in self.uname:
                 os.environ['LDFLAGS'] = appendVar(
