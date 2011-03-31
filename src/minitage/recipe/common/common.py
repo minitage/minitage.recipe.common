@@ -146,7 +146,11 @@ class MinitageCommonRecipe(object):
             self.libraries.append('/'.join((s, 'lib',)))
             self.rpath.append('/'.join((s, 'lib',)))
         if os.path.exists('/'.join((s, 'lib', 'pkgconfig',))):
-            self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))  
+            self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
+        sp = os.path.join(s, self.site_packages)
+        if os.path.exists(sp):
+            self.pypath.append(sp)
+
     def __init__(self, buildout, name, options):
         """__init__.
         The code is voulantary not splitted
@@ -715,7 +719,7 @@ class MinitageCommonRecipe(object):
                     dg = m.groupdict()
                     s = '/%s%s' % (dg['letter'], dg['path'])
                 s = s.replace('\\', '/')
-            self.appendPaths(s) 
+            self.appendPaths(s)
         for s in self.minitage_dependencies:
             if 'win' in self.uname:
                 m = letter_re.match(s)
@@ -1035,7 +1039,7 @@ class MinitageCommonRecipe(object):
                  if s.strip()]
                 + self_libdirs ,
                 self.paths_sep
-            ) 
+            )
             # rpath is neither supported by  native windows or cygwin
             if not 'win' in self.uname:
                 os.environ['LDFLAGS'] = appendVar(

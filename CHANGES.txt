@@ -2,8 +2,8 @@
 CHANGELOG
 =======================
 
-->UP
---------
+1.78 (unreleased)
+-----------------------
     
     - python 2.4 retrocompatibities fixes
     - add os subrelease mecanism (cygwin2)
@@ -19,7 +19,9 @@ CHANGELOG
 
         * darwin : all macs
         * leopard, snowleopard for a specific one
+
     - Add extra-paths to PYTHONPATH while setting PYTHONPATH
+    - Add  part/site-pakckages-VER in PYTHONPATH if exists
 
 1.42
 ------
