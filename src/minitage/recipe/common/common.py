@@ -414,6 +414,8 @@ class MinitageCommonRecipe(object):
             kv = uname()[2]
             if kv == '9.8.0':
                 self.osxflavor = 'leopard'
+            if kv.startswith('11.'):
+                self.osxflavor = 'lion' 
             if kv.startswith('10.'):
                 self.osxflavor = 'snowleopard'
             if self.osxflavor:
@@ -427,6 +429,8 @@ class MinitageCommonRecipe(object):
                 )
             if self.osxflavor == 'snowleopard':
                 self.osx_target = '10.6'
+            if self.osxflavor == 'lion':
+                self.osx_target = '10.7' 
             if self.osxflavor == 'leopard':
                 self.osx_target = '10.5'
             if self.force_osx_target:
