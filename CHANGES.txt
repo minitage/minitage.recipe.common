@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.79 (unreleased)
+1.79 (2011-11-28)
 -----------------
 
 - add lion to macosx flavors
