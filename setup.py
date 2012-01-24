@@ -6,7 +6,7 @@ setupdir = os.path.abspath(
 os.chdir(setupdir)
 
 name='minitage.recipe.common'
-version = '1.80'
+version = '1.81dev'
 
 def read(*rnames):
     return open(
