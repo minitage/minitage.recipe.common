@@ -1045,7 +1045,7 @@ class MinitageCommonRecipe(object):
                 self.paths_sep
             )
             # rpath is neither supported by  native windows or cygwin
-            if not 'win' in self.uname:
+            if not 'win' in self.uname or ('darwin' in self.uname):
                 os.environ['LDFLAGS'] = appendVar(
                     os.environ.get('LDFLAGS',''),
                     ['-Wl,-rpath -Wl,%s%s%s' % (quote, s, quote) \
