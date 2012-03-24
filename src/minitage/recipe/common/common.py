@@ -29,6 +29,8 @@
 
 __docformat__ = 'restructuredtext en'
 
+
+from pprint import pprint
 import copy
 import imp
 import logging
@@ -148,7 +150,7 @@ class MinitageCommonRecipe(object):
         if os.path.exists('/'.join((s, 'lib', 'pkgconfig',))):
             self.pkgconfigpath.append('/'.join((s, 'lib', 'pkgconfig',)))
         sp = os.path.join(s, self.site_packages)
-        if os.path.exists(sp):
+        if os.path.exists(sp) and (not sp in self.pypath):
             self.pypath.append(sp)
 
     def __init__(self, buildout, name, options):
@@ -415,7 +417,7 @@ class MinitageCommonRecipe(object):
             if kv == '9.8.0':
                 self.osxflavor = 'leopard'
             if kv.startswith('11.'):
-                self.osxflavor = 'lion' 
+                self.osxflavor = 'lion'
             if kv.startswith('10.'):
                 self.osxflavor = 'snowleopard'
             if self.osxflavor:
@@ -430,7 +432,7 @@ class MinitageCommonRecipe(object):
             if self.osxflavor == 'snowleopard':
                 self.osx_target = '10.6'
             if self.osxflavor == 'lion':
-                self.osx_target = '10.7' 
+                self.osx_target = '10.7'
             if self.osxflavor == 'leopard':
                 self.osx_target = '10.5'
             if self.force_osx_target:
@@ -444,11 +446,13 @@ class MinitageCommonRecipe(object):
         self.pkgconfigpath = splitstrip(self.options.get('pkgconfigpath', ''))
 
         # python path
-        self.pypath = [self.buildout['buildout']['directory'],
-                       self.options['location']]
-        self.pypath.extend(self.pypath)
+        self.pypath = [os.path.join(
+            self.buildout['buildout']['directory'], self.options['location']
+        )]
         self.pypath.extend(
-            [norm_path(a) for a in splitstrip(self.options.get('pythonpath', ''))]
+            [norm_path(a)
+             for a in splitstrip(self.options.get('pythonpath', ''))
+             if not a in self.pypath]
         )
 
         # tmp dir
@@ -529,7 +533,8 @@ class MinitageCommonRecipe(object):
                     self.logger.debug(message % self.str_minibuild)
                 if m:
                     if m.category == 'eggs':
-                        minibuild_eggs.append(dep)
+                        if not dep in minibuild_eggs:
+                            minibuild_eggs.append(dep)
                     if m.category == 'dependencies':
                         minibuild_dependencies.append(dep)
 
@@ -585,6 +590,7 @@ class MinitageCommonRecipe(object):
                             'python%s' % pyver
                         )
                     )
+
         # If we have not python selected yet, default to the current one
         if not self.executable:
             self.executable = self.buildout.get(
@@ -702,15 +708,23 @@ class MinitageCommonRecipe(object):
                 'parts',
                 self.site_packages)
         )
+        self.inner_site_packges_path = os.path.join(self.site_packages_path,
+                                                    self.site_packages)
 
-        self.minitage_eggs.extend(
-            [os.path.abspath(os.path.join(
-                self.minitage_directory,
-                'eggs', s, 'parts', self.site_packages,
-            )) for s in splitstrip(
-                self.minitage_section.get('eggs', '')
-            ) + minibuild_eggs]
-        )
+
+        for s in (splitstrip(self.minitage_section.get('eggs', ''))
+                  + minibuild_eggs):
+            for p in (
+                os.path.abspath(os.path.join(
+                    self.minitage_directory,
+                    'eggs', s, 'parts', self.site_packages, self.site_packages )),
+                os.path.abspath(os.path.join(
+                    self.minitage_directory,
+                    'eggs', s, 'parts', self.site_packages))
+            ):
+                if not p in self.minitage_eggs:
+                    self.minitage_eggs.append(p)
+
         # sometime we install system libraries as eggs because they depend on
         # a particular python version !
         # There is there we suceed in getting their libraries/include into
@@ -735,8 +749,10 @@ class MinitageCommonRecipe(object):
 
         for s in self.minitage_eggs \
                  + [self.site_packages_path] \
+                 + [self.inner_site_packges_path] \
                  + [self.buildout['buildout']['eggs-directory']] :
-            self.pypath.append(s)
+            if not s in self.pypath:
+                self.pypath.append(s)
 
         # avoid relative path in aboslute path, it breaks mingw compiler !
         # also filtering out double includes/such
