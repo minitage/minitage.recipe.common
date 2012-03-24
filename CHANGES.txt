@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.81 (unreleased)
+1.81 (2012-03-24)
 -----------------
 
 - Add part/site-packages-pyver to pythonpath
