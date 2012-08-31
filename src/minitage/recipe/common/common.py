@@ -126,7 +126,7 @@ def which(program, environ=None, key = 'PATH', split = ':'):
         fp = os.path.abspath(os.path.join(entry, program))
         if os.path.exists(fp):
             return fp
-        if (sys.platform.startwith('cyg') or sys.platform.startswith('win')) and os.path.exists(fp+'.exe'):
+        if (sys.platform.startswith('cyg') or sys.platform.startswith('win')) and os.path.exists(fp+'.exe'):
             return fp+'.exe'
     raise IOError('Program not fond: %s in %s ' % (program, PATH))
 

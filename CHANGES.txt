@@ -5,7 +5,7 @@ CHANGELOG
 1.82 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- syntax error bugfix
 
 
 1.81 (2012-03-24)
