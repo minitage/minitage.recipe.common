@@ -501,10 +501,11 @@ class MinitageCommonRecipe(object):
         try:
             self.minimerge = core.Minimerge({
                 'nolog' : True,
+                'skip_self_upgrade': True,
                 'config': self.minitage_config
                 }
             )
-        except:
+        except Exception, e:
             message = 'Problem when intiializing minimerge '\
                     'instance with %s config.'
             self.logger.debug(message % self.minitage_config)
