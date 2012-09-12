@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.83 (unreleased)
+1.83 (2012-09-12)
 -----------------
 
 - force no upgrade on minitage itself
