@@ -5,7 +5,7 @@ CHANGELOG
 1.84 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- buildout2 compat
 
 
 1.83 (2012-09-12)

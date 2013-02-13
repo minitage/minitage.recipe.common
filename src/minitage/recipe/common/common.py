@@ -52,7 +52,7 @@ try:
 except:
     from platform import uname
 
-
+D = os.path.dirname
 
 from minitage.core.common import get_from_cache, system, splitstrip, letter_re, remove_path
 from minitage.core.unpackers.interfaces import IUnpackerFactory
@@ -274,15 +274,13 @@ class MinitageCommonRecipe(object):
         cfg = norm_path(
             os.path.abspath(
                 os.path.join(self.buildout['buildout']['directory'], '..', '..',
-                            'etc', 'minitage.cfg')
+                            'etc', 'minimerge.cfg')
             )
         )
         if os.path.exists(cfg):
             # inside a project?
             self.minitage_directory = norm_path(
-                os.path.abspath(
-                    os.path.join(self.buildout['buildout']['directory'], '..', '..')
-                )
+                os.path.abspath(D(D((cfg))))
             )
         else:
             # default to python prefix
