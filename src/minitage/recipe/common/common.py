@@ -817,6 +817,7 @@ class MinitageCommonRecipe(object):
         use_cache : if False, always redownload even if the file is there
         """
         self.logger.debug('Download archive from %s.'%url)
+        cache_destination = ""
 
         if not url:
             url = self.url
@@ -906,26 +907,44 @@ class MinitageCommonRecipe(object):
                                     )
             return scm_dest
         else:
+            dests = []
             if cache:
                 m = mmd5()
                 m.update(url)
                 url_md5sum = m.hexdigest()
                 _, _, urlpath, _, fragment = urlparse.urlsplit(url)
-                filename = urlpath.split('/')[-1]
-                destination = os.path.join(destination, "%s_%s" % (filename, url_md5sum))
-            if destination and not os.path.isdir(destination):
-                os.makedirs(destination)
+                cache_destination = destination
+                dests.append(cache_destination)
+                destination = os.path.join(destination, url_md5sum)
+                if not self.offline:
+                    dests.append(destination)
+            for dest in dests:
+                if dest and not os.path.isdir(dest):
+                    os.makedirs(dest)
             logger = None
             if self.logger.getEffectiveLevel() <= logging.DEBUG:
                 logger = self.logger
-            return get_from_cache(
-                url = url,
-                download_cache = destination,
-                logger = logger,
-                file_md5 = md5,
-                offline = self.offline,
-                use_cache=use_cache
-            )
+            try:
+                return get_from_cache(
+                    url = url,
+                    download_cache = destination,
+                    logger = logger,
+                    file_md5 = md5,
+                    offline = self.offline,
+                    use_cache=use_cache
+                )
+            except:
+                if self.offline:
+                    return get_from_cache(
+                        url = url,
+                        download_cache = cache_destination,
+                        logger = logger,
+                        file_md5 = md5,
+                        offline = self.offline,
+                        use_cache=use_cache
+                    )
+                else:
+                    raise
 
     def _set_py_path(self, ws=None):
         """Set python path.

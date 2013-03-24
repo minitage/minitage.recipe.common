@@ -5,7 +5,7 @@ CHANGELOG
 1.85 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- better cache filename guessing
 
 
 1.84 (2013-02-13)
