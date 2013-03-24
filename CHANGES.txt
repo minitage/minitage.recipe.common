@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.85 (unreleased)
+1.85 (2013-03-24)
 -----------------
 
 - better cache filename guessing
