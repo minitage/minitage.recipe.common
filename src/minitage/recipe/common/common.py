@@ -934,17 +934,14 @@ class MinitageCommonRecipe(object):
                     use_cache=use_cache
                 )
             except:
-                if self.offline:
-                    return get_from_cache(
-                        url = url,
-                        download_cache = cache_destination,
-                        logger = logger,
-                        file_md5 = md5,
-                        offline = self.offline,
-                        use_cache=use_cache
-                    )
-                else:
-                    raise
+                return get_from_cache(
+                    url = url,
+                    download_cache = cache_destination,
+                    logger = logger,
+                    file_md5 = md5,
+                    offline = self.offline,
+                    use_cache=use_cache
+                )
 
     def _set_py_path(self, ws=None):
         """Set python path.
