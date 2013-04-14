@@ -54,7 +54,17 @@ except:
 
 D = os.path.dirname
 
-from minitage.core.common import get_from_cache, system, splitstrip, letter_re, remove_path
+from minitage.core.common import (
+    get_from_cache,
+    system,
+    splitstrip,
+    MinimergeError,
+    MinimergeDownloadError,
+    MinimergeMD5Mismatch,
+    MinimergeOfflineError,
+    letter_re,
+    remove_path,
+)
 from minitage.core.unpackers.interfaces import IUnpackerFactory
 from minitage.core.fetchers.interfaces import IFetcherFactory
 from minitage.core import core
@@ -924,24 +934,22 @@ class MinitageCommonRecipe(object):
             logger = None
             if self.logger.getEffectiveLevel() <= logging.DEBUG:
                 logger = self.logger
-            try:
+
+            def download(url, destination, logger, md5, offline, use_cache):
                 return get_from_cache(
                     url = url,
                     download_cache = destination,
                     logger = logger,
                     file_md5 = md5,
-                    offline = self.offline,
-                    use_cache=use_cache
-                )
-            except:
-                return get_from_cache(
-                    url = url,
-                    download_cache = cache_destination,
-                    logger = logger,
-                    file_md5 = md5,
-                    offline = self.offline,
-                    use_cache=use_cache
-                )
+                    offline = offline,
+                    use_cache=use_cache)
+
+            try:
+                return download(url, destination, logger, md5, self.offline, use_cache)
+            # in offline, try directly in cache
+            except MinimergeOfflineError, e:
+                return download(url, cache_destination, logger, md5, self.offline, use_cache)
+
 
     def _set_py_path(self, ws=None):
         """Set python path.
