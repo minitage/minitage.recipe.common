@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.87 (unreleased)
+1.87 (2013-04-14)
 -----------------
 
 - better download handling
