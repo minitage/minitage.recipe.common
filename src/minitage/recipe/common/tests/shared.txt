@@ -97,7 +97,7 @@ Options
     - rpath(-UNAME)
         Directories to add as -rpath.
     - skip-flags: do not set CFLAGS/LDFLAGS/LD_RUN_PATH at all.
-    - environment
+    - environment(-UNAME)
         a part name where we can get key/values to add to the build environment [see cmmi recipe for documentation]
     - path(-UNAME)
         line separated list of paths to append to $PATH during build

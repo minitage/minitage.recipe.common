@@ -5,7 +5,7 @@ CHANGELOG
 1.88 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- specific uname envs
 
 
 1.87 (2013-04-14)

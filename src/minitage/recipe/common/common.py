@@ -260,22 +260,26 @@ class MinitageCommonRecipe(object):
         )
         # update with the desired env. options
         self.environ = {}
-        if 'environment' in options:
-            if not '=' in options["environment"]:
-                lenv = buildout.get(options['environment'].strip(), {})
-                for key in lenv:
-                    self.environ[key] = os.environ[key] = lenv[key]
-            else:
-                 for line in options["environment"].split("\n"):
-                     try:
-                         lparts = line.split('=')
-                         key = lparts[0]
-                         value = '='.join(lparts[1:])
-                         key, _, value = line.partition('=')
-                         self.environ[key] = os.environ[key] = value
-                     except Exception, e:
-                         pass
-
+        for k in ["environment", 
+            "%s-%s" % (uname, "environment"),
+            "%s-%s" % ("environment", uname),
+        ]:
+            if k in options:
+                if not '=' in options[k]:
+                    lenv = buildout.get(options[k].strip(), {})
+                    for key in lenv:
+                        self.environ[key] = os.environ[key] = lenv[key]
+                else:
+                     for line in options[k].split("\n"):
+                         try:
+                             lparts = line.split('=')
+                             key = lparts[0]
+                             value = '='.join(lparts[1:])
+                             key, _, value = line.partition('=')
+                             self.environ[key] = os.environ[key] = value
+                         except Exception, e:
+                             pass
+    
         # maybe md5
         self.md5 = self.options.get('md5sum-%s' % self.uname, self.options.get('md5sum', None))
 
