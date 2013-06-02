@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.88 (unreleased)
+1.88 (2013-06-02)
 -----------------
 
 - specific uname envs
