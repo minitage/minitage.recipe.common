@@ -450,8 +450,8 @@ class MinitageCommonRecipe(object):
             osx_targets = {
                 'mountainlion': '10.8',
                 'lion':  '10.7',
-                'leopard':  '10.6',
-                'snowleopard':  '10.5',
+                'snowleopard':  '10.6',
+                'leopard':  '10.5',
             }
             # defaults to last: mountainlion
             LASTOSXFLAVOR = max([(osx_targets[k], k) for k in osx_targets])[1]
