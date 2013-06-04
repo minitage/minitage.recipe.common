@@ -428,10 +428,14 @@ class MinitageCommonRecipe(object):
             kv = uname()[2]
             if kv == '9.8.0':
                 self.osxflavor = 'leopard'
+            if kv.startswith('12.'):
+                self.osxflavor = 'mountainlion'
             if kv.startswith('11.'):
                 self.osxflavor = 'lion'
             if kv.startswith('10.'):
                 self.osxflavor = 'snowleopard'
+            if not self.osxflavor:
+                self.osxflavor = 'darwin'
             if self.osxflavor:
                 self.patches.extend(
                     [norm_path(a) for a in splitstrip(
@@ -441,18 +445,28 @@ class MinitageCommonRecipe(object):
                         )
                     )]
                 )
-            if self.osxflavor == 'snowleopard':
-                self.osx_target = '10.6'
-            if self.osxflavor == 'lion':
-                self.osx_target = '10.7'
-            if self.osxflavor == 'leopard':
-                self.osx_target = '10.5'
+            if not self.osxflavor:
+                self.osxflavor = 'mountainlion'
+            osx_targets = {
+                'mountainlion': '10.8',
+                'lion':  '10.7',
+                'leopard':  '10.6',
+                'snowleopard':  '10.5',
+            }
+            # defaults to last: mountainlion
+            LASTOSXFLAVOR = max([(osx_targets[k], k) for k in osx_targets])[1]
+            self.osx_target = osx_targets.get(self.osxflavor, LASTOSXFLAVOR)
             if self.force_osx_target:
                 if self.force_osx_target.strip() != 'true':
                     self.osx_target = self.force_osx_target.strip()
 
         # path we will put in env. at build time
         self.path = splitstrip(self.options.get('path-%s' % self.uname, self.options.get('path', '')))
+        darwin_paths = ['/usr/X11/bin']
+        if self.uname in ['darwin']:
+            for i in darwin_paths:
+                if not i in self.path and os.path.exists(i):
+                    self.path.append(i)
 
         # pkgconfigpath
         self.pkgconfigpath = splitstrip(self.options.get('pkgconfigpath', ''))
