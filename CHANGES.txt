@@ -2,7 +2,7 @@
 CHANGELOG
 =======================
 
-1.89 (unreleased)
+1.89 (2013-06-22)
 -----------------
 
 - osx targets fixes, handle default new mountainlion PATH mods
