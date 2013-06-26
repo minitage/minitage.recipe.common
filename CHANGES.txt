@@ -5,7 +5,7 @@ CHANGELOG
 1.90 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- export back to buildout executable option
 
 
 1.89 (2013-06-22)

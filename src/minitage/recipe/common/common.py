@@ -739,6 +739,8 @@ class MinitageCommonRecipe(object):
                                                     self.site_packages)
 
 
+        # export back executable
+        self.options['executable'] = self.executable
         for s in (splitstrip(self.minitage_section.get('eggs', ''))
                   + minibuild_eggs):
             for p in (
