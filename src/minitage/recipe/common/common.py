@@ -455,7 +455,7 @@ class MinitageCommonRecipe(object):
             }
             # defaults to last: mountainlion
             LASTOSXFLAVOR = max([(osx_targets[k], k) for k in osx_targets])[1]
-            self.osx_target = osx_targets.get(self.osxflavor, LASTOSXFLAVOR)
+            self.osx_target = osx_targets.get(self.osxflavor, osx_targets.get(LASTOSXFLAVOR))
             if self.force_osx_target:
                 if self.force_osx_target.strip() != 'true':
                     self.osx_target = self.force_osx_target.strip()
